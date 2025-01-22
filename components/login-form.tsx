@@ -4,17 +4,20 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FormEvent, useState } from "react"
+import { z } from "zod"
 
 import { cn } from "@/lib/utils"
 import { login } from "@/lib/action/login"
-import { z } from "zod"
 import { ErrorText } from "./text"
+import { Loading } from "./ui/loading"
+import { validationResponse } from "@/types/login"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const messageInitialState = {
+    status: 200,
     error: {
       email: '',
       password: ''
@@ -22,19 +25,11 @@ export function LoginForm({
   }
   const [message, setMessage] = useState(messageInitialState)
   const [isLoading, setIsLoading] = useState(false)
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    const form = event.target
-    const formData = new FormData(form)
-    const { email, password } = { email: formData.get('email'), password: formData.get('password') };
-    const validationResult = checkIsDataValid({ email, password })
-    setIsLoading(true)
-    const result = await login({ email, password });
-  }
-  async function checkIsDataValid({ email, password }) {
+
+  function checkIsDataValid({ email, password }): validationResponse {
     const emailResponse = z.string().email().safeParse(email)
     const passwordResponse = z.string().safeParse(email)
-
+    let status = 200;
     if (!emailResponse.success) {
       setMessage(prev => {
         return {
@@ -45,12 +40,39 @@ export function LoginForm({
           }
         }
       })
+      status = 400;
     }
     if (!passwordResponse.success) {
       console.log(passwordResponse.error);
-
     }
+    return { status }
+  }
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    const form = event.target
+    const formData = new FormData(form)
+    // validate on client
+    const { email, password } = { email: formData.get('email'), password: formData.get('password') };
+    const validationResult = checkIsDataValid({ email, password })
+    if (validationResult.status == 400) {
+      setMessage(prev => {
+        return {
+          ...prev,
+          error: {
+            ...prev.error,
+            password: 'Invalid Payload'
+          }
+        }
+      })
+      return
+    }
+    setIsLoading(true)
 
+    const result = await login({ email, password });
+    if (result.status == 400) {
+      setMessage(result)
+    }
+    setIsLoading(false)
   }
 
   return (
@@ -65,7 +87,6 @@ export function LoginForm({
                   Login to your CashierApp account
                 </p>
               </div>
-              {/* email */}
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -79,7 +100,6 @@ export function LoginForm({
                   message.error.email && <ErrorText>{message.error.email}</ErrorText>
                 }
               </div>
-              {/* password */}
               <div className="grid *:gap-2">
                 <div className="flex items-center flex-col ">
                   <Label htmlFor="password" className="self-start">Password</Label>
@@ -95,8 +115,8 @@ export function LoginForm({
                   </a>
                 </div>
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? <Loading /> : 'Login'}
               </Button>
             </div>
           </form>
