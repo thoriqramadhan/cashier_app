@@ -44,3 +44,15 @@ export async function createSession(payload: jwtPayload) {
         throw new Error('Error creating session')
     }
 }
+
+export async function getAuthInfo() {
+    const cookiesStore = await cookies()
+    const jwtSignature = cookiesStore.get('session')?.value
+    let authInfo;
+    try {
+        authInfo = await decrypt(jwtSignature)
+    } catch (error) {
+        authInfo = false;
+    }
+    return authInfo
+}
