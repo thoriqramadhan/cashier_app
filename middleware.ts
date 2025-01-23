@@ -10,18 +10,22 @@ export async function middleware(request: NextRequest) {
     const isInPublicRoute = publicRoute.includes(pathNow)
     const cookiesStore = await cookies()
     const jwtSignature = cookiesStore.get('session')?.value
+
     let authInfo;
     try {
         authInfo = await decrypt(jwtSignature);
     } catch (error) {
         authInfo = false;
     }
+    const headers = new Headers(request.headers)
+    headers.set("x-current-path" , request.nextUrl.pathname)
+
     if (!isInPublicRoute && !authInfo) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+        return NextResponse.redirect(new URL('/login', request.nextUrl.origin) , {headers});
     } else if (isInPublicRoute && authInfo) {
-        return NextResponse.redirect(new URL('/' , request.nextUrl.origin))
+        return NextResponse.redirect(new URL('/' , request.nextUrl.origin) ,{headers})
     }
-    return NextResponse.next()
+    return NextResponse.next({headers})
 }
 
 // See "Matching Paths" below to learn more
