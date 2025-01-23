@@ -29,7 +29,7 @@ export async function login(formData: dataLogin): Promise<loginResponse> {
     }
     try {
         const userReference = user[0] as UserDb
-        await createSession({ id: parseInt(userReference.id), name: userReference.username, email: userReference.email })
+        await createSession({ id: parseInt(userReference.id), name: userReference.username, email: userReference.email, role: userReference.role })
 
     } catch (error) {
         console.log(error);

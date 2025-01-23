@@ -21,7 +21,6 @@ export async function middleware(request: NextRequest) {
     } else if (isInPublicRoute && authInfo) {
         return NextResponse.redirect(new URL('/' , request.nextUrl.origin))
     }
-    console.log(request.nextUrl)
     return NextResponse.next()
 }
 

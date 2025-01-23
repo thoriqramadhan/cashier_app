@@ -11,6 +11,7 @@ import { login } from "@/lib/action/login"
 import { ErrorText } from "./text"
 import { Loading } from "./ui/loading"
 import { validationResponse } from "@/types/login"
+import { useRouter } from "next/navigation"
 
 export function LoginForm({
   className,
@@ -23,6 +24,7 @@ export function LoginForm({
       password: ''
     }
   }
+  const router = useRouter();
   const [message, setMessage] = useState(messageInitialState)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -47,6 +49,7 @@ export function LoginForm({
     }
     return { status }
   }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     const form = event.target
@@ -71,6 +74,8 @@ export function LoginForm({
     const result = await login({ email, password });
     if (result.status == 400) {
       setMessage(result)
+    } else {
+      router.push('/')
     }
     setIsLoading(false)
   }
