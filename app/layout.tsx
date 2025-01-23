@@ -5,6 +5,8 @@ import { getAuthInfo } from "@/lib/auth/jwt";
 import SidebarContextProvider from "@/components/context/sidebarContext";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/ui/sidebar";
+import { SidebarActivationButton } from "@/components/client/button";
+import { headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,23 +28,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const authInfo = await getAuthInfo()
-  if (!authInfo) {
-    redirect('/login')
-  }
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarContextProvider authInfo={authInfo}>
-          <div className="flex">
-            <Sidebar />
-            <div className="w-full">
-              {children}
-            </div>
-          </div>
-        </SidebarContextProvider>
+        {children}
       </body>
     </html>
   );
