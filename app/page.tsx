@@ -1,14 +1,11 @@
-import { query } from "@/lib/dbpool";
-import Image from "next/image";
-import seedPostgres from "@/helper/seed";
+'use client'
+import { useSidebar } from "@/components/context/sidebarContext";
 
-export default async function Home() {
-  const test = await query('SELECT * FROM user');
+export default function Home() {
+  const { state, setter } = useSidebar()
   return (
     <>
-      <form action={seedPostgres}>
-        <button type="submit">Seed db</button>
-      </form>
+      <button onClick={() => setter("setStatus", !state)}>OpenClose</button>
       <p>Hello, World!</p>
     </>
   );

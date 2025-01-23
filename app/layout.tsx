@@ -4,6 +4,7 @@ import "./globals.css";
 import { getAuthInfo } from "@/lib/auth/jwt";
 import SidebarContextProvider from "@/components/context/sidebarContext";
 import { redirect } from "next/navigation";
+import Sidebar from "@/components/ui/sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SidebarContextProvider authInfo={authInfo}>
-          {children}
+          <div className="flex">
+            <Sidebar />
+            <div className="w-full">
+              {children}
+            </div>
+          </div>
         </SidebarContextProvider>
       </body>
     </html>

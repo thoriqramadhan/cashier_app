@@ -70,3 +70,9 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .transition-300 {
+    @apply transition-all duration-300
+  }
+}
