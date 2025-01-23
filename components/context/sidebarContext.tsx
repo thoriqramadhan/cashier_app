@@ -1,20 +1,21 @@
 'use client'
 import { jwtPayload } from '@/types/login';
-import React, { createContext, FC, useContext, useState } from 'react';
+import React, { createContext, FC, useContext, useEffect, useState } from 'react';
 
 import { contextOutput, pathOption, setterArguments } from '@/types/sidebar';
 
 interface SidebarContextProps {
     children: React.ReactNode,
-    authInfo: jwtPayload
+    authInfo: jwtPayload,
+    pathNow: string
 }
 
 const SidebarContext = createContext<contextOutput | undefined>(undefined)
 
-const SidebarContextProvider: FC<SidebarContextProps> = ({ children }) => {
+const SidebarContextProvider: FC<SidebarContextProps> = ({ pathNow, children }) => {
     const sidebarStateInit = {
         sidebarStatus: true,
-        sidebarPath: 'home'
+        sidebarPath: pathNow
     }
     const [sidebarState, setSidebarState] = useState(sidebarStateInit)
     function handleSidebarState(option: setterArguments, value: pathOption | boolean) {

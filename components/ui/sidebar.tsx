@@ -2,6 +2,8 @@
 import { BaggageClaim, Clock, House } from 'lucide-react';
 import React, { cloneElement, FC } from 'react';
 import { useSidebar } from '../context/sidebarContext';
+import Link from 'next/link';
+import { pathOption } from '@/types/sidebar';
 
 interface SidebarProps {
 
@@ -43,11 +45,14 @@ interface SidebarItemProps {
 }
 
 const SidebarItem: FC<SidebarItemProps> = ({ sidebarValue, pathNow }) => {
+    const { setter } = useSidebar()
     const isSelected = pathNow === sidebarValue.name
-    return <div className={`px-3 py-2 w-fit rounded-md flex flex-col items-center justify-center cursor-pointer  ${isSelected && 'border-green-300 border bg-green-100/30'}`}>
-        {sidebarValue.icon && cloneElement(sidebarValue.icon, { color: isSelected ? '#4ade80' : '#a1a1aa' })}
-        <p className={`capitalize ${isSelected ? 'text-green-300' : 'text-zinc-400'}`}>{sidebarValue.name}</p>
-    </div>
+    return <Link href={`/${sidebarValue.name}`} onClick={() => setter('setPath', sidebarValue.name as pathOption)}>
+        <div className={`px-3 py-2 w-fit rounded-md flex flex-col items-center justify-center cursor-pointer  ${isSelected && 'border-green-300 border bg-green-100/30'}`}>
+            {sidebarValue.icon && cloneElement(sidebarValue.icon, { color: isSelected ? '#4ade80' : '#a1a1aa' })}
+            <p className={`capitalize ${isSelected ? 'text-green-300' : 'text-zinc-400'}`}>{sidebarValue.name}</p>
+        </div>
+    </Link>
 }
 
 
