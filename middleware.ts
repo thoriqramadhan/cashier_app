@@ -23,7 +23,7 @@ export async function middleware(request: NextRequest) {
     if (!isInPublicRoute && !authInfo) {
         return NextResponse.redirect(new URL('/login', request.nextUrl.origin) , {headers});
     } else if (isInPublicRoute && authInfo) {
-        return NextResponse.redirect(new URL('/' , request.nextUrl.origin) ,{headers})
+        return NextResponse.redirect(new URL('/home' , request.nextUrl.origin) ,{headers})
     }
     return NextResponse.next({headers})
 }

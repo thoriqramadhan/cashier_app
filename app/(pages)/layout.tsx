@@ -12,7 +12,10 @@ interface LayoutProps {
 const Layout: FC<LayoutProps> = async ({ children }) => {
     const authInfo = await getAuthInfo()
     const headerList = await headers()
-    const pathName = headerList.get("x-current-path")
+    const pathNameUnfiltered = headerList.get("x-current-path")
+    const pathName = pathNameUnfiltered?.split('/').filter(item => item.length > 0) ?? []
+    console.log(pathName);
+
     return <SidebarContextProvider authInfo={authInfo}>
         <div className="flex">
             <Sidebar />
@@ -20,7 +23,9 @@ const Layout: FC<LayoutProps> = async ({ children }) => {
                 <div className="my-2 px-5 flex h-[36px] w-full gap-x-3 items-center">
                     <SidebarActivationButton variant={'ghost'} className="px-3 py-2" />
                     <div className="h-3/4 w-px bg-zinc-200"></div>
-                    <p>Text</p>
+                    {pathName && pathName.map((item, index) => (
+                        <p className='capitalize' key={index}>{item}</p>
+                    ))}
                 </div>
                 {children}
             </div>
