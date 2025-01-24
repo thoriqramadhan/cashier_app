@@ -1,8 +1,9 @@
 'use client'
-import { BaggageClaim, BookUser, ChartColumnStacked, Clock, House, Utensils } from 'lucide-react';
+import { BaggageClaim, BookUser, ChartColumnStacked, Clock, House, Settings, Utensils } from 'lucide-react';
 import React, { cloneElement, FC } from 'react';
-import { useSidebar } from '../context/sidebarContext';
 import Link from 'next/link';
+
+import { useSidebar } from '../context/sidebarContext';
 import { pathOption } from '@/types/sidebar';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +41,10 @@ const Sidebar: FC<SidebarProps> = ({ }) => {
         {
             name: 'attendance',
             icon: <BookUser />,
-            admin: true
+        },
+        {
+            name: 'settings',
+            icon: <Settings />
         }
     ]
     return <div className={`h-screen bg-white shadow-lg border-r transition-300 flex flex-col items-center gap-y-5 ${state.sidebarStatus ? 'w-[150px] px-3 py-6' : 'w-0 opacity-0'}`}>
