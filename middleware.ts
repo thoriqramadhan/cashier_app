@@ -25,17 +25,17 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
         authInfo = false;
     }
-    const headers = new Headers(request.headers)
-    headers.set("x-current-path" , request.nextUrl.pathname)
+    // const headers = new Headers(request.headers)
+    // headers.set("x-current-path" , request.nextUrl.pathname)
 
     if (!isInPublicRoute && !authInfo) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl.origin), { headers });
+        return NextResponse.redirect(new URL('/login', request.nextUrl.origin)).headers.set('x-current-path' , request.nextUrl.pathname);
     } else if (isInPublicRoute && authInfo) {
-        return NextResponse.redirect(new URL('/home', request.nextUrl.origin), { headers })
+        return NextResponse.redirect(new URL('/home', request.nextUrl.origin)).headers.set('x-current-path' , request.nextUrl.pathname);
     } else if (isInAdminROute && !isAdmin) {
         return NextResponse.rewrite(new URL('/404' , request.url))
     }
-    return NextResponse.next({headers})
+    return NextResponse.next().headers.set('x-current-path' , request.nextUrl.pathname);
 }
 
 // See "Matching Paths" below to learn more
