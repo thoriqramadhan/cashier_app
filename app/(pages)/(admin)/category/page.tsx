@@ -2,25 +2,76 @@
 import { DropdownSettings } from '@/components/client/dropdown';
 import Modal from '@/components/client/modal';
 import { useModal } from '@/components/context/modalContext';
+import { ErrorText } from '@/components/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { createCategory } from '@/lib/action/category';
 import { Label } from '@radix-ui/react-label';
 import { Ban } from 'lucide-react';
-import { FC } from 'react';
+import { FC, FormEvent, FormEventHandler, useState } from 'react';
+import { z } from 'zod';
 
 interface PageProps {
 
 }
 
 const Page: FC<PageProps> = ({ }) => {
+    const messageInitialState = {
+        status: 200,
+        error: {
+            category: '',
+        }
+    }
     const { modalState, modalSetter } = useModal()
+    const [loading, setLoading] = useState(false)
+    const [message, setMessage] = useState(messageInitialState)
+    async function handleCreateCategory(e: FormEvent<HTMLFormElement>) {
+        e.preventDefault()
+        const form = e.currentTarget;
+        const formData = new FormData(form)
+        const category = formData.get('category_name') as string;
+        const clientValidationResult = checkIsDataValid(category)
+        if (clientValidationResult.status === 400) {
+            return;
+        }
+        const serverResult = await createCategory(category)
+
+        if (serverResult?.status === 400) {
+            setMessage({
+                status: serverResult.status,
+                error: serverResult.error
+            })
+        } else {
+            setMessage(messageInitialState)
+            modalSetter('state', !modalState.isOpen)
+        }
+    }
+    function checkIsDataValid(category: string) {
+        const categoryResponse = z.string().min(3).safeParse(category);
+        let status = 200;
+        if (!categoryResponse.success) {
+            setMessage(prev => {
+                return {
+                    ...prev,
+                    error: {
+                        category: categoryResponse.error.errors[0].message
+                    }
+                }
+            })
+            status = 400;
+        }
+        return { status }
+    }
     return <>
         <Modal>
-            <form action="" className='space-y-3'>
+            <form onSubmit={handleCreateCategory} className='space-y-3'>
                 <Label htmlFor='category_name'>
                     Category Name
                 </Label>
                 <Input type='text' name='category_name' placeholder='category name..' />
+                {
+                    message.error.category && <ErrorText className="self-start">{message.error.category}</ErrorText>
+                }
                 <Button className='w-full'>Create</Button>
             </form>
         </Modal>
