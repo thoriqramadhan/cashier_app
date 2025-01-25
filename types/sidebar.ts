@@ -1,7 +1,8 @@
 export type contextOutput = {
     state: {
         sidebarStatus: boolean,
-        sidebarPath: string
+        sidebarPath: string,
+        role: string
     },
     setter: (option: setterArguments, value: pathOption | boolean) => void;
 }
