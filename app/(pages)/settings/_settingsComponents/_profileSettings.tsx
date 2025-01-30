@@ -32,6 +32,10 @@ const _profileSettings: FC<_profileSettingsProps> = ({ authInfo }) => {
 
     }, [profileState])
     return <>
+        <div className="">
+            <h3 className='text-slate-900 font-semibold'>Profile</h3>
+            <p className='text-sm font-thin'>Set yout account detail.</p>
+        </div>
         <div className="my-5 flex flex-col gap-y-3">
             <div className="w-[150px] h-[150px] bg-zinc-50 rounded-full"></div>
         </div>

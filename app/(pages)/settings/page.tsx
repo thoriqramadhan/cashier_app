@@ -1,29 +1,58 @@
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+'use client'
 import { getAuthInfo } from '@/lib/auth/jwt';
 import _profileSettings from './_settingsComponents/_profileSettings';
-import { FC } from 'react';
-import { boolean } from 'zod';
+import { FC, useEffect, useState } from 'react';
+import { Loading } from '@/components/ui/loading';
+import { AuthInfoPayload } from '@/types/session';
+import Tab from '@/components/client/tab';
 
 interface PageProps {
 
 }
 
-const Page: FC<PageProps> = async ({ }) => {
-    const authInfo = await getAuthInfo();
+const Page: FC<PageProps> = ({ }) => {
+    const authInfoInit = {
+        email: '',
+        exp: 0,
+        expiredAt: 0,
+        iat: 0,
+        id: 0,
+        name: '',
+        role: ''
+    }
+    const [isLoading, setIsLoading] = useState(true)
+    const [authInfo, setAuthInfo] = useState(authInfoInit)
+    const [selectedTab, setSelectedTab] = useState('profile')
+    const settingsOption = [
+        {
+            name: 'profile',
+        },
+        {
+            name: 'general'
+        }
+    ]
+    const fetchAuthInfo = async () => {
+        try {
+            const response = await getAuthInfo()
+            if (!response) {
+                throw new Error('Failed to get auth info!')
+            }
+            setAuthInfo(response)
+            setIsLoading(false);
+        } catch (error) {
+            setIsLoading(false)
+        }
+    }
+    function showPageHandler() {
+        if (selectedTab == 'profile') return <_profileSettings authInfo={authInfo} />
+    }
+    useEffect(() => {
+        fetchAuthInfo()
+    }, [])
+    if (isLoading) return <Loading className='absolute top-1/2 left-1/2' size={50} />
     return <div className='px-5 w-full'>
-        <div className="w-full flex gap-x-3 my-5">
-            {Array.from({ length: 3 }).map((item, index) => (
-                <span className='block bg-zinc-50 px-5 py-2 rounded-full text-slate-700 font-medium cursor-pointer transition-300 hover:bg-black/80 hover:text-white' key={index}>
-                    item
-                </span>
-            ))}
-        </div>
-        <div className="">
-            <h3 className='text-slate-900 font-semibold'>Profile</h3>
-            <p className='text-sm font-thin'>Set yout account detail.</p>
-        </div>
-        <_profileSettings authInfo={authInfo} />
+        <Tab settingsOption={settingsOption} selectedTab={selectedTab} setter={setSelectedTab} />
+        {showPageHandler()}
     </div>;
 }
 
