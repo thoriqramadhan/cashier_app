@@ -32,3 +32,11 @@ export async function getUser(identifier: userIdentifier[], value: string[]) {
         throw new Error(error)
     }
 }
+
+export async function createUser({name , email , password , role}: {name: string , email : string, password : string, role: string} ) {
+    try {
+        await query('INSERT INTO users(username , email , password , role) VALUES ( $1 , $2 , $3 , $4)' , [name, email,password,role])
+    } catch (error) {
+        
+    }
+}

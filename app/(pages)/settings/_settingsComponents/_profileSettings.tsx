@@ -1,4 +1,5 @@
 'use client'
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthInfoPayload } from '@/types/session';
@@ -59,6 +60,7 @@ const _profileSettings: FC<_profileSettingsProps> = ({ authInfo }) => {
                 <Input name='password' type='text' id='password' disabled={!isAdmin} value={profileState.password} onChange={(event) => handleChangeProfile({ password: event.target.value })} />
             </div>
         </div>
+        <Button className='w-[70%] mt-4 '>Update</Button>
     </>
 }
 
