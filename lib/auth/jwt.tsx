@@ -52,6 +52,7 @@ export async function getAuthInfo() {
     try {
         authInfo = await decrypt(jwtSignature)
     } catch (error) {
+        console.log(error);
         authInfo = false;
     }
     return authInfo
