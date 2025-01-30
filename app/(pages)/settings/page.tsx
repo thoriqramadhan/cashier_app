@@ -24,7 +24,7 @@ const Page: FC<PageProps> = ({ }) => {
     const [authInfo, setAuthInfo] = useState(authInfoInit)
     const searchParams = useSearchParams();
     const paramQuery = searchParams.get('tab')
-    const [selectedTab, setSelectedTab] = useState(paramQuery)
+    const [selectedTab, setSelectedTab] = useState(paramQuery ?? 'profile')
 
     const settingsOption = [
         {
