@@ -3,8 +3,8 @@ import { getAuthInfo } from '@/lib/auth/jwt';
 import _profileSettings from './_settingsComponents/_profileSettings';
 import { FC, useEffect, useState } from 'react';
 import { Loading } from '@/components/ui/loading';
-import { AuthInfoPayload } from '@/types/session';
 import Tab from '@/components/client/tab';
+import { useSearchParams } from 'next/navigation';
 
 interface PageProps {
 
@@ -22,7 +22,10 @@ const Page: FC<PageProps> = ({ }) => {
     }
     const [isLoading, setIsLoading] = useState(true)
     const [authInfo, setAuthInfo] = useState(authInfoInit)
-    const [selectedTab, setSelectedTab] = useState('profile')
+    const searchParams = useSearchParams();
+    const paramQuery = searchParams.get('tab')
+    const [selectedTab, setSelectedTab] = useState(paramQuery)
+
     const settingsOption = [
         {
             name: 'profile',

@@ -1,6 +1,6 @@
 'use client'
 import { Ellipsis } from 'lucide-react';
-import { FC, useState } from 'react';
+import React, { FC, HTMLAttributes, ReactElement, useState } from 'react';
 
 interface DropdownSettingsProps {
     children: React.ReactNode
@@ -13,17 +13,35 @@ export const DropdownSettings: FC<DropdownSettingsProps> = ({ children }) => {
     return <span className='flex items-center relative flex-col'>
         <Ellipsis size={iconSize} color={iconColor} className='cursor-pointer' onClick={() => setIsOpen(prev => !prev)} />
         <div className={`w-[100px] ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
-            <DropdownSettingsItem />
+            {children}
+        </div>
+    </span>
+}
+
+interface DropdownContainerProps {
+    appereance: React.ReactElement<HTMLAttributes<HTMLDivElement>>,
+    children: React.ReactNode
+}
+
+export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children }) => {
+    const [isOpen, setIsOpen] = useState(false)
+    return <span className='flex items-center relative flex-col'>
+        {React.cloneElement(appereance, { onClick: () => setIsOpen(prev => !prev) })}
+        <div className={`w-[100px] ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
+            {children}
         </div>
     </span>
 }
 
 
-interface DropdownSettingsItemProps {
+
+
+interface DropdownItemProps extends React.HTMLAttributes<HTMLDivElement> {
+    children: string
 }
 
-export const DropdownSettingsItem: FC<DropdownSettingsItemProps> = ({ }) => {
-    return <div className='w-full h-[35px] flex items-center px-3 transition-300  bg-white cursor-pointer hover:bg-zinc-50'>
-        test
+export const DropdownItem: FC<DropdownItemProps> = ({ children, ...props }) => {
+    return <div className='w-full h-[35px] flex items-center px-3 transition-300  bg-white cursor-pointer hover:bg-zinc-50' {...props}>
+        {children}
     </div>;
 }

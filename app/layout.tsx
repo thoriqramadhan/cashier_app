@@ -31,7 +31,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={` antialiased`}
+        className={` antialiased select-none`}
       >
         {children}
       </body>

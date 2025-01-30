@@ -1,5 +1,5 @@
 'use client'
-import { DropdownSettings } from '@/components/client/dropdown';
+import { DropdownItem, DropdownSettings } from '@/components/client/dropdown';
 import Modal from '@/components/client/modal';
 import { useModal } from '@/components/context/modalContext';
 import { ErrorText } from '@/components/text';
@@ -102,7 +102,14 @@ const CategoryItem: FC<CategoryItemProps> = ({ }) => {
             <Ban size={iconSize} color={iconColor} />
             <p className='font-semibold text-slate-500'>Food</p>
         </span>
-        <DropdownSettings />
+        <DropdownSettings >
+            <DropdownItem>
+                Edit
+            </DropdownItem>
+            <DropdownItem>
+                Delete
+            </DropdownItem>
+        </DropdownSettings>
     </div>
 }
 
