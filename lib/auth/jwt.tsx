@@ -1,6 +1,7 @@
 'use server'
 import { jwtPayload } from "@/types/login";
-import { jwtVerify, SignJWT } from "jose";
+import { AuthInfoPayload } from "@/types/session";
+import { JWTPayload, jwtVerify, SignJWT } from "jose";
 import { cookies } from "next/headers";
 
 const secretKey = process.env.NEXT_PUBLIC_jWTSECRET;
@@ -10,7 +11,7 @@ const encodedKey = new TextEncoder().encode(secretKey);
 export async function decrypt(jwtSignature: string) {
     try {
         const { payload } = await jwtVerify(jwtSignature, encodedKey)
-        return payload
+        return payload as unknown as AuthInfoPayload
     } catch (error) {
         throw new Error('Error validating key')
     }
@@ -45,14 +46,13 @@ export async function createSession(payload: jwtPayload) {
     }
 }
 
-export async function getAuthInfo() {
+export async function getAuthInfo(): Promise<AuthInfoPayload | boolean> {
     const cookiesStore = await cookies()
     const jwtSignature = cookiesStore.get('session')?.value
     let authInfo;
     try {
-        authInfo = await decrypt(jwtSignature)
+        authInfo = (await decrypt(jwtSignature)) as AuthInfoPayload
     } catch (error) {
-        console.log(error);
         authInfo = false;
     }
     return authInfo
