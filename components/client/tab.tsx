@@ -9,7 +9,7 @@ interface TabProps {
 
 
 const Tab: FC<TabProps> = ({ children }) => {
-    return <div className="w-full flex gap-x-3 my-5">
+    return <div className="w-[70%] overflow-x-auto scrollbar-thin flex gap-x-3 my-5">
         {
             children
         }

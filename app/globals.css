@@ -75,4 +75,15 @@ body {
   .transition-300 {
     @apply transition-all duration-300
   }
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 5px; /* Scrollbar horizontal */
+    width: 5px; /* Scrollbar vertikal */
+}
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background-color: #888;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-zinc-200
+  }
 }

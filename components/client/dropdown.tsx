@@ -1,4 +1,5 @@
 'use client'
+import { cn } from '@/lib/className';
 import { Ellipsis } from 'lucide-react';
 import React, { FC, HTMLAttributes, ReactElement, useState } from 'react';
 
@@ -20,12 +21,13 @@ export const DropdownSettings: FC<DropdownSettingsProps> = ({ children }) => {
 
 interface DropdownContainerProps {
     appereance: React.ReactElement<HTMLAttributes<HTMLDivElement>>,
-    children: React.ReactNode
+    children: React.ReactNode,
+    className?: string
 }
 
-export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children }) => {
+export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children, className }) => {
     const [isOpen, setIsOpen] = useState(false)
-    return <span className='flex items-center relative flex-col'>
+    return <span className={cn('flex items-center relative flex-col', className)}>
         {React.cloneElement(appereance, { onClick: () => setIsOpen(prev => !prev) })}
         <div className={`w-[100px] ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
             {children}
