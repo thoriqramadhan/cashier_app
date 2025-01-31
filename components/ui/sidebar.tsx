@@ -77,9 +77,9 @@ interface SidebarItemProps {
 }
 
 const SidebarItem: FC<SidebarItemProps> = ({ sidebarValue, pathNow, isAdmin }) => {
-    const { setter } = useSidebar()
+    const { state, setter } = useSidebar()
     const isSelected = pathNow === sidebarValue.name
-    return <Link className={cn(sidebarValue.admin && 'hidden', sidebarValue.admin && isAdmin && 'block', !sidebarValue?.admin && isAdmin && !sidebarValue.general && 'hidden')
+    return <Link className={cn(sidebarValue.admin && 'hidden', sidebarValue.admin && isAdmin && 'block', !sidebarValue?.admin && isAdmin && !sidebarValue.general && 'hidden', state.sidebarStatus ? 'block' : 'hidden')
     } href={`/${sidebarValue.name}`} onClick={() => setter('setPath', sidebarValue.name as pathOption)}>
         <div className={`px-3 py-2 w-fit rounded-md flex flex-col items-center justify-center cursor-pointer  ${isSelected && 'border-green-300 border bg-green-100/30'}`}>
             {sidebarValue.icon && cloneElement(sidebarValue.icon, { color: isSelected ? '#4ade80' : '#a1a1aa' })}
