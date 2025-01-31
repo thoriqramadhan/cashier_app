@@ -10,4 +10,4 @@ export type contextOutput = {
 export type setterArguments = 'setStatus' | 'setPath'
 
 
-export type pathOption = 'home' | 'orders' | 'history'
+export type pathOption = 'home' | 'orders' | 'history' | 'settings'
