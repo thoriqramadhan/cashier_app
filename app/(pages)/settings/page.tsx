@@ -3,14 +3,15 @@ import { getAuthInfo } from '@/lib/auth/jwt';
 import _profileSettings from './_settingsComponents/_profileSettings';
 import { FC, useEffect, useState } from 'react';
 import { Loading } from '@/components/ui/loading';
-import Tab from '@/components/client/tab';
-import { useSearchParams } from 'next/navigation';
+import Tab, { TabItem } from '@/components/client/tab';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface PageProps {
 
 }
 
 const Page: FC<PageProps> = ({ }) => {
+    const router = useRouter()
     const authInfoInit = {
         email: '',
         exp: 0,
@@ -49,12 +50,24 @@ const Page: FC<PageProps> = ({ }) => {
     function showPageHandler() {
         if (selectedTab == 'profile') return <_profileSettings authInfo={authInfo} />
     }
+    function handleChangeRoute(name: string) {
+        console.log('clicked');
+
+        setSelectedTab(name)
+        router.push(`/settings?tab=${name}`)
+    }
     useEffect(() => {
         fetchAuthInfo()
     }, [])
     if (isLoading) return <Loading className='absolute top-1/2 left-1/2' size={50} />
     return <div className='px-5 w-full'>
-        <Tab settingsOption={settingsOption} selectedTab={selectedTab} setter={setSelectedTab} />
+        <Tab >
+            {
+                settingsOption.map((option, index) => (
+                    <TabItem key={index} name={option.name} selectedTab={selectedTab} onClick={() => handleChangeRoute(option.name)} />
+                ))
+            }
+        </Tab>
         {showPageHandler()}
     </div>;
 }

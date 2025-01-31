@@ -30,7 +30,6 @@ const _profileSettings: FC<_profileSettingsProps> = ({ authInfo }) => {
     }
     useEffect(() => {
         console.log(profileState);
-
     }, [profileState])
     return <>
         <div className="">
