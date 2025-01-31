@@ -27,12 +27,16 @@ export async function middleware(request: NextRequest) {
     // const headers = new Headers(request.headers)
     // headers.set("x-current-path" , request.nextUrl.pathname)
 
-    if (pathNow == '/' && authInfo) {
+    if (pathNow == '/' && authInfo && !isAdmin) {
         const response = NextResponse.redirect(new URL('/home', request.nextUrl.origin));
         response.headers.set('x-current-path', request.nextUrl.pathname)
         return response;
     } else if (pathNow == '/' && !authInfo) {
         const response = NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    } else if (pathNow == '/' && authInfo && isAdmin) {
+        const response = NextResponse.redirect(new URL('/products', request.nextUrl.origin));
         response.headers.set('x-current-path', request.nextUrl.pathname)
         return response;
     }
