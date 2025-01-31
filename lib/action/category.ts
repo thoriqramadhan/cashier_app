@@ -1,11 +1,10 @@
 'use server'
 
-import { createCategoryDB, getAllCategory } from "@/helper/db/category"
+import { createCategoryDB, deleteCategoryDB, getAllCategory } from "@/helper/db/category"
 
 export async function createCategory(category: string) {
     try {
-        const createResult = await createCategoryDB(category)
-        console.log(createResult.status);
+        const createResult = await createCategoryDB(category.toLowerCase())
 
         if (createResult.status == 400) {
             return {
@@ -21,5 +20,26 @@ export async function createCategory(category: string) {
 
     } catch (error) {
         return 'gagal'
+    }
+}
+
+export async function deleteCategory(category: string) {
+    try {
+        const deleteResponse = await deleteCategoryDB(category);
+        if (deleteResponse.status == 400) {
+            return {
+                status: 400
+            }
+        } else {
+            return {
+                status: 200
+            }
+        }
+    } catch (error) {
+        console.log(error);
+        
+        return {
+            status: 400
+        }
     }
 }
