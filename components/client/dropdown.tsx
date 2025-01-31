@@ -37,11 +37,13 @@ export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, chil
 
 
 interface DropdownItemProps extends React.HTMLAttributes<HTMLDivElement> {
-    children: string
+    children: string,
+    icon?: React.ReactNode
 }
 
-export const DropdownItem: FC<DropdownItemProps> = ({ children, ...props }) => {
-    return <div className='w-full h-[35px] flex items-center px-3 transition-300  bg-white cursor-pointer hover:bg-zinc-50' {...props}>
-        {children}
+export const DropdownItem: FC<DropdownItemProps> = ({ children, icon, ...props }) => {
+    const iconModifed = icon && React.cloneElement(icon, { size: 15, className: 'mr-2' })
+    return <div className='w-full h-[35px] flex items-center space-x-2 px-3 transition-300  bg-white cursor-pointer hover:bg-zinc-50' {...props}>
+        {iconModifed} {children}
     </div>;
 }
