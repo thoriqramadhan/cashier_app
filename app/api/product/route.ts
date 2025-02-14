@@ -7,7 +7,8 @@ const productSchema = z.object(
     {
         product: z.string().min(3),
         stock: z.number().min(0),
-        category: z.string().min(3)
+        category: z.string().min(3),
+        price: z.number().min(1000)
     }
 )
 export async function POST(req: NextRequest) {
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
         if (isProductDuplicate) {
             throw new Error('Product is duplicated!')
         }
-        await query('INSERT INTO products(name , stock , category) VALUES ($1 , $2 , $3)' , [validationResult.data.product.toLowerCase() , validationResult.data.stock.toString() , validationResult.data.category])
+        await query('INSERT INTO products(name , stock , category , price) VALUES ($1 , $2 , $3 , $4)' , [validationResult.data.product.toLowerCase() , validationResult.data.stock.toString() , validationResult.data.category , validationResult.data.price.toString()])
         return NextResponse.json(payload , {status: 200})
     } catch (error) {
         console.log(error)

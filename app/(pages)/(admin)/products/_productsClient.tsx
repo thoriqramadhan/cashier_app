@@ -6,16 +6,19 @@ import Title from '@/components/client/title';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CategoryResponse } from '@/helper/db/category';
+import { getAllProductsReturnValue } from '@/types/products';
 import { createContext, Dispatch, FC, FormEvent, SetStateAction, useContext, useState } from 'react';
 import { z } from 'zod';
 
 interface _productsClientProps {
-    categoryDatas: CategoryResponse[]
+    categoryDatas: CategoryResponse[],
+    productDatas: getAllProductsReturnValue[]
 }
 interface ProductContextType {
     pageStatus: pageStatusProps,
     setPageStatus: Dispatch<SetStateAction<pageStatusProps>>,
-    categoryDatas: CategoryResponse[]
+    categoryDatas: CategoryResponse[],
+    productDatas: getAllProductsReturnValue[]
 }
 const ProductContext = createContext<ProductContextType | undefined>(undefined)
 
@@ -28,7 +31,7 @@ const useProductContext = () => {
     return context;
 };
 
-const _productsClient: FC<_productsClientProps> = ({ categoryDatas }) => {
+const _productsClient: FC<_productsClientProps> = ({ categoryDatas, productDatas }) => {
     const [pageStatus, setPageStatus] = useState<pageStatusProps>('list')
     function renderPageHandler() {
         if (pageStatus == 'list') {
@@ -38,7 +41,7 @@ const _productsClient: FC<_productsClientProps> = ({ categoryDatas }) => {
         }
     }
     return <div className="px-5 w-full my-5">
-        <ProductContext.Provider value={{ pageStatus, setPageStatus, categoryDatas }}>
+        <ProductContext.Provider value={{ pageStatus, setPageStatus, categoryDatas, productDatas }}>
             {renderPageHandler()}
         </ProductContext.Provider>
     </div>
@@ -49,7 +52,7 @@ interface ListPageProps {
 }
 
 const ListPage: FC<ListPageProps> = ({ }) => {
-    const { pageStatus, setPageStatus, categoryDatas } = useProductContext();
+    const { pageStatus, setPageStatus, categoryDatas, productDatas } = useProductContext();
     const [selectedTab, setSelectedTab] = useState('all')
     function handleChangeTab(name: string) {
         setSelectedTab(name)
@@ -67,20 +70,23 @@ const ListPage: FC<ListPageProps> = ({ }) => {
                 ))
             }
         </Tab>
-        <span className='w-full h-[2px] bg-zinc-50 block rounded-full'></span>
-        <div className="w-full my-5">
-            <div className="w-[250px] overflow-hidden h-[350px] bg-white rounded-lg border shadow-md flex flex-col">
-                <div className="h-[50%] w-full bg-zinc-50 relative">
-                    <div className="w-fit h-fit px-3 py-1 text-sm border bg-zinc-50 rounded-full flex justify-end items-center absolute top-3 right-3">
-                        Drink
+        <div className="w-full my-5 flex gap-5">
+            {
+                productDatas.map((product, index) => (
+                    <div className="w-[250px] overflow-hidden h-[350px] bg-white rounded-lg border shadow-md flex flex-col" key={index}>
+                        <div className="h-[50%] w-full bg-zinc-100 relative">
+                            <div className="w-fit h-fit px-3 py-1 text-sm border capitalize bg-zinc-50 rounded-full flex justify-end items-center absolute top-3 right-3">
+                                {product.category}
+                            </div>
+                        </div>
+                        <div className="p-3 flex-1 flex flex-col">
+                            <h2 className='text-xl'>{product.name}</h2>
+                            <h2 className='text-lg text-slate-600'>Rp 10.000</h2>
+                            <Button className='w-full mt-auto'>Edit</Button>
+                        </div>
                     </div>
-                </div>
-                <div className="p-3 flex-1 flex flex-col">
-                    <h2 className='text-xl'>Cofee</h2>
-                    <h2 className='text-lg text-slate-600'>Rp 10.000</h2>
-                    <Button className='w-full mt-auto'>Edit</Button>
-                </div>
-            </div>
+                )) && <p>NODATASS</p>
+            }
         </div>
     </>
 }
@@ -96,11 +102,12 @@ const AddPage: FC<AddPageProps> = ({ }) => {
     function changeSelectedCategory(value: string) {
         setSelectedCategory(value)
     }
-    function checkIsDataValid(productName: string, stock: number, category: string) {
-        const errors = { product: '', stock: '', category: '' }
+    function checkIsDataValid(productName: string, stock: number, category: string, price: number) {
+        const errors = { product: '', stock: '', category: '', price: '' }
         let isSuccess = true
         const isProductValid = z.string().min(3).safeParse(productName)
         const isStockValid = z.number().min(0).safeParse(stock)
+        const isPriceValid = z.number().min(0).safeParse(price)
         const isCategoryValid = z.string().min(3).safeParse(category)
         if (!isProductValid.success) {
             errors.product = isProductValid.error.message
@@ -114,6 +121,10 @@ const AddPage: FC<AddPageProps> = ({ }) => {
             errors.category = isCategoryValid.error.message
             isSuccess = false
         }
+        if (!isPriceValid.success) {
+            errors.price = isPriceValid.error.message
+            isSuccess = false
+        }
         if (isSuccess) {
             return { status: 200, errors }
         } else {
@@ -124,14 +135,14 @@ const AddPage: FC<AddPageProps> = ({ }) => {
         event.preventDefault()
         const form = event.currentTarget
         const formData = new FormData(form)
-        const { productName, stock, category } = { productName: formData.get('product_name'), stock: Number(formData.get('product_stock')), category: selectedCategory }
-        const validationResult = checkIsDataValid(productName, stock, category)
+        const { productName, stock, category, price } = { productName: formData.get('product_name'), stock: Number(formData.get('product_stock')), category: selectedCategory, price: Number(formData.get('product_price')) }
+        const validationResult = checkIsDataValid(productName, stock, category, price)
         if (validationResult.status === 400) {
             console.log(validationResult.errors);
             return;
         }
         try {
-            const productData = { product: productName, stock, category }
+            const productData = { product: productName, stock, category, price }
             const response = await fetch('/api/product', {
                 method: 'POST',
                 body: JSON.stringify({ payload: productData })
@@ -153,8 +164,9 @@ const AddPage: FC<AddPageProps> = ({ }) => {
             <div className="w-[150px] h-[150px] bg-red-100 rounded-md shrink-0"></div>
             <form onSubmit={handleCreateProduct} className='w-full'>
                 <div className=" flex-1 grid grid-cols-2 grid-rows-2 gap-x-3 h-full">
-                    <Input className='col-span-2' placeholder='Product name....' name='product_name' required />
+                    <Input placeholder='Product name....' name='product_name' required />
                     <Input type='number' placeholder='Stock' min='0' step='1' name='product_stock' required />
+                    <Input type='number' placeholder='Price' min='1000' step='1000' name='product_price' required />
                     <DropdownContainer itemStyle='full' appereance={<div className="w-full h-full flex items-center px-5">{selectedCategory}</div>} className='border h-[36px] rounded-[6px] shadow-sm'>
                         {
                             categoryDatas.map((category, index) => (
