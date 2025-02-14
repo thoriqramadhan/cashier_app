@@ -1,3 +1,4 @@
+import { getAllProducts } from "@/helper/db/product";
 import { query } from "@/lib/dbpool";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -20,7 +21,15 @@ export async function POST(req: NextRequest) {
         if (!validationResult.success) {
             return NextResponse.json({ error: `Data tidak valid! ${validationResult.error}` }, { status: 400 });
         }
-        await query('INSERT INTO products(name , stock , category) VALUES ($1 , $2 , $3)' , [validationResult.data.product , validationResult.data.stock.toString() , validationResult.data.category])
+        const productsDb = await getAllProducts()
+        let isProductDuplicate;
+        if (productsDb.length > 0) {
+            isProductDuplicate = productsDb.find(item => item.name === validationResult.data.product)
+        }
+        if (isProductDuplicate) {
+            throw new Error('Product is duplicated!')
+        }
+        await query('INSERT INTO products(name , stock , category) VALUES ($1 , $2 , $3)' , [validationResult.data.product.toLowerCase() , validationResult.data.stock.toString() , validationResult.data.category])
         return NextResponse.json(payload , {status: 200})
     } catch (error) {
         console.log(error)

@@ -29,7 +29,7 @@ const useProductContext = () => {
 };
 
 const _productsClient: FC<_productsClientProps> = ({ categoryDatas }) => {
-    const [pageStatus, setPageStatus] = useState<pageStatusProps>('add')
+    const [pageStatus, setPageStatus] = useState<pageStatusProps>('list')
     function renderPageHandler() {
         if (pageStatus == 'list') {
             return <ListPage />
