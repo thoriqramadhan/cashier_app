@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         const productsDb = await getAllProducts()
         let isProductDuplicate;
         if (productsDb.length > 0) {
-            isProductDuplicate = productsDb.find(item => item.name === validationResult.data.product)
+            isProductDuplicate = productsDb.find(item => item.name === validationResult.data.product.toLowerCase())
         }
         if (isProductDuplicate) {
             throw new Error('Product is duplicated!')
