@@ -90,7 +90,12 @@ interface AddPageProps {
 }
 
 const AddPage: FC<AddPageProps> = ({ }) => {
-    const { pageStatus, setPageStatus } = useProductContext();
+    const { pageStatus, setPageStatus, categoryDatas } = useProductContext();
+    const [selectedCategory, setSelectedCategory] = useState('Category')
+    function changeSelectedCategory(value: string) {
+        setSelectedCategory(value)
+    }
+
     return <>
         <div className="w-full justify-end flex h-[50px]">
             <Button onClick={() => setPageStatus('list')}>Back</Button>
@@ -99,13 +104,16 @@ const AddPage: FC<AddPageProps> = ({ }) => {
         <div className="w-full flex gap-x-5">
             <div className="w-[150px] h-[150px] bg-red-100 rounded-md"></div>
             <div className=" flex-1 grid grid-cols-2 grid-rows-2 gap-x-3">
-                <Input />
-                <Input />
-                <Input />
-                <DropdownContainer appereance={<div className="w-full h-full flex items-center px-5">Category</div>} className='border h-[36px] rounded-[6px] shadow-sm'>
-                    <DropdownItem >
-                        test
-                    </DropdownItem>
+                <Input className='col-span-2' placeholder='Product name....' name='product_name' />
+                <Input type='number' placeholder='Stock' min='0' step='1' name='product_stock' />
+                <DropdownContainer itemStyle='full' appereance={<div className="w-full h-full flex items-center px-5">{selectedCategory}</div>} className='border h-[36px] rounded-[6px] shadow-sm'>
+                    {
+                        categoryDatas.map((category, index) => (
+                            <DropdownItem key={index} onClickCallback={() => changeSelectedCategory(category.name)} className='capitalize'>
+                                {category.name}
+                            </DropdownItem>
+                        ))
+                    }
                 </DropdownContainer>
                 <Button className='w-full col-span-2'>Add</Button>
             </div>

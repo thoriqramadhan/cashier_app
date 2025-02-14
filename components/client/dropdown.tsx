@@ -1,7 +1,10 @@
 'use client'
 import { cn } from '@/lib/className';
+import { DropdownContainerOutput } from '@/types/context';
 import { Ellipsis } from 'lucide-react';
-import React, { FC, HTMLAttributes, ReactElement, useState } from 'react';
+import React, { createContext, FC, HTMLAttributes, ReactElement, useContext, useState } from 'react';
+
+const DropdownContainerContext = createContext<DropdownContainerOutput>(undefined)
 
 interface DropdownSettingsProps {
     children: React.ReactNode
@@ -11,10 +14,15 @@ export const DropdownSettings: FC<DropdownSettingsProps> = ({ children }) => {
     const iconSize = 17;
     const iconColor = '#64748b'
     const [isOpen, setIsOpen] = useState(false)
+    function handleDropdown() {
+        setIsOpen(prev => !prev)
+    }
     return <span className='flex items-center relative flex-col'>
         <Ellipsis size={iconSize} color={iconColor} className='cursor-pointer' onClick={() => setIsOpen(prev => !prev)} />
         <div className={`w-[100px] ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
-            {children}
+            <DropdownContainerContext.Provider value={{ isOpen, handleDropdown }}>
+                {children}
+            </DropdownContainerContext.Provider>
         </div>
     </span>
 }
@@ -22,30 +30,53 @@ export const DropdownSettings: FC<DropdownSettingsProps> = ({ children }) => {
 interface DropdownContainerProps {
     appereance: React.ReactElement<HTMLAttributes<HTMLDivElement>>,
     children: React.ReactNode,
+    itemStyle?: 'full' | 'default',
     className?: string
 }
 
-export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children, className }) => {
+export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children, className, itemStyle = 'default' }) => {
     const [isOpen, setIsOpen] = useState(false)
+    function handleDropdown() {
+        setIsOpen(prev => !prev)
+    }
     return <span className={cn('flex items-center relative flex-col', className)}>
-        {React.cloneElement(appereance, { onClick: () => setIsOpen(prev => !prev) })}
-        <div className={`w-[100px] ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
-            {children}
+        {React.cloneElement(appereance, { onClick: () => handleDropdown() })}
+        <div className={`${itemStyle == 'full' ? 'w-full' : 'w-[100px]'} ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
+            <DropdownContainerContext.Provider value={{ isOpen, handleDropdown }}>
+                {children}
+            </DropdownContainerContext.Provider>
         </div>
     </span>
 }
 
-
+export function useDropdownContainer() {
+    try {
+        const context = useContext(DropdownContainerContext)
+        return context;
+    } catch (error) {
+        console.error(error)
+    }
+}
 
 
 interface DropdownItemProps extends React.HTMLAttributes<HTMLDivElement> {
     children: string,
-    icon?: React.ReactNode
+    icon?: React.ReactNode,
+    className?: string,
+    onClickCallback?: () => void
 }
 
-export const DropdownItem: FC<DropdownItemProps> = ({ children, icon, ...props }) => {
+export const DropdownItem: FC<DropdownItemProps> = ({ children, icon, onClickCallback, className, ...props }) => {
     const iconModifed = icon && React.cloneElement(icon, { size: 15, className: 'mr-2' })
-    return <div className='w-full h-[35px] flex items-center space-x-2 px-3 transition-300  bg-white cursor-pointer hover:bg-zinc-50' {...props}>
+    const { handleDropdown } = useDropdownContainer()
+    function onClickHandler() {
+        handleDropdown()
+        if (onClickCallback) {
+            onClickCallback()
+        }
+    }
+    return <div className={cn('w-full h-[35px] flex items-center space-x-2 px-3 transition-300  bg-white cursor-pointer hover:bg-zinc-100', className)} {...props} onClick={() => onClickHandler()}>
         {iconModifed} {children}
     </div>;
 }
+

@@ -24,7 +24,6 @@ export const _categoryClient: FC<_categoryClientProps> = ({ categoryDatas }) => 
             category: '',
         }
     }
-    console.log(categoryDatas);
 
     const router = useRouter()
     const { modalState, modalSetter } = useModal()
@@ -120,7 +119,7 @@ const CategoryItem: FC<CategoryItemProps> = ({ name }) => {
             <DropdownItem>
                 Edit
             </DropdownItem>
-            <DropdownItem onClick={() => handleDelete()}>
+            <DropdownItem onClickCallback={() => handleDelete()}>
                 Delete
             </DropdownItem>
         </DropdownSettings>
