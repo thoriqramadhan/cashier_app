@@ -12,4 +12,4 @@ export type modalState = {
     isOpen: boolean,
 }
 
-export type modalOptionArguments = 'state'
+export type modalOptionArguments = 'state' 

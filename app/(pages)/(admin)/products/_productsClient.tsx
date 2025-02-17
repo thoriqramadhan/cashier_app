@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { CategoryResponse } from '@/helper/db/category';
 import { formatToIDR } from '@/lib/utils';
 import { getAllProductsReturnValue } from '@/types/products';
+import { Trash2 } from 'lucide-react';
 import { createContext, Dispatch, FC, FormEvent, SetStateAction, useContext, useEffect, useState } from 'react';
 import { z } from 'zod';
 
@@ -87,10 +88,15 @@ function checkIsDataValid(productName: string, stock: number, category: string, 
 const ListPage: FC<ListPageProps> = ({ }) => {
     const editDataInit = { name: '', stock: 0, price: 0, category: 'Category', id: 0 }
     const { pageStatus, setPageStatus, categoryDatas, productDatas } = useProductContext();
+
+    const [selectedTab, setSelectedTab] = useState('all')
     const { modalSetter, modalState } = useModal()
+    const [modalType, setModalType] = useState<'edit' | 'delete'>('edit')
+
     const [productDataByCategory, setProductDataByCategory] = useState(productDatas)
     const [editData, setEditData] = useState(editDataInit)
-    const [selectedTab, setSelectedTab] = useState('all')
+
+    // functions
     function changeSelectedCategory(value: string) {
         setEditData(prev => ({ ...prev, category: value }))
     }
@@ -98,6 +104,7 @@ const ListPage: FC<ListPageProps> = ({ }) => {
         if (option == 'open') {
             modalSetter('state', !modalState.isOpen)
             setEditData({ name: value.name, price: Number(value.price), category: value.category, stock: Number(value.stock), id: Number(value.id) })
+
         } else if (option == 'edit') {
             event?.preventDefault()
             const validationResult = checkIsDataValid(editData.name, editData.stock, editData.category, editData.price)
@@ -132,6 +139,31 @@ const ListPage: FC<ListPageProps> = ({ }) => {
                 }
             } catch (error) {
                 console.log(error)
+            }
+        }
+    }
+    async function handleDelete(option: 'open' | 'delete', name: string, id: number) {
+        if (option == 'open') {
+            setModalType('delete')
+            setEditData(prev => ({ ...prev, name, id }))
+            modalSetter('state', !modalState.isOpen)
+
+        } else {
+            try {
+                const deleteResponse = await fetch('/api/product', {
+                    method: "DELETE",
+                    body: JSON.stringify({ id })
+                })
+                if (!deleteResponse.ok) {
+                    throw new Error('Failed to delete ' + id)
+                }
+                setEditData(editDataInit)
+                modalSetter('state', !modalState.isOpen)
+                const newProductData = productDatas.filter(product => product.id != id.toString())
+                setProductDataByCategory(newProductData)
+
+            } catch (error) {
+                console.log(error);
             }
         }
     }
@@ -175,6 +207,7 @@ const ListPage: FC<ListPageProps> = ({ }) => {
                             <div className="w-fit h-fit px-3 py-1 text-sm border capitalize bg-zinc-50 rounded-full flex justify-end items-center absolute top-3 right-3">
                                 {product.category}
                             </div>
+                            <Trash2 size={20} className='absolute top-5 left-3 text-red-500 cursor-pointer' onClick={() => handleDelete('open', product.name, product.id)} />
                         </div>
                         <div className="p-3 flex-1 flex flex-col">
                             <h2 className='text-xl capitalize w-full relative'>{product.name} <span className='text-xs absolute right-0 px-2 py-1 bg-green-300 rounded-full'>{product.stock}</span></h2>
@@ -186,23 +219,30 @@ const ListPage: FC<ListPageProps> = ({ }) => {
             }
         </div>
         <Modal >
-            {editData.name.length > 0 &&
-                <form className='w-full grid grid-cols-2 gap-3 px-5' onSubmit={e => handleEdit('edit', editData, e)}>
-                    <h1 className='col-span-2'>Edit Products</h1>
-                    <Input placeholder='Product name....' name='product_name' required value={editData.name} onChange={e => handleChangeInput(e.target.value, 'name')} />
-                    <Input type='number' placeholder='Stock' min='0' step='1' name='product_stock' required value={editData.stock} onChange={e => handleChangeInput(e.target.value, 'stock')} />
-                    <Input type='number' placeholder='Price' min='1000' step='1000' name='product_price' required value={editData.price} onChange={e => handleChangeInput(e.target.value, 'price')} />
-                    <DropdownContainer itemStyle='full' appereance={<div className="w-full h-full flex items-center px-5">{editData.category}</div>} className='border h-[36px] rounded-[6px] shadow-sm'>
-                        {
-                            categoryDatas.map((category, index) => (
-                                <DropdownItem key={index} onClickCallback={() => changeSelectedCategory(category.name)} className='capitalize'>
-                                    {category.name}
-                                </DropdownItem>
-                            ))
-                        }
-                    </DropdownContainer>
-                    <Button className='col-span-2' type='submit'>Edit</Button>
-                </form>}
+            {
+                modalType == 'edit' ?
+                    <form className='w-full grid grid-cols-2 gap-3 px-5' onSubmit={e => handleEdit('edit', editData, e)}>
+                        <h1 className='col-span-2'>Edit Product</h1>
+                        <Input placeholder='Product name....' name='product_name' required value={editData.name} onChange={e => handleChangeInput(e.target.value, 'name')} />
+                        <Input type='number' placeholder='Stock' min='0' step='1' name='product_stock' required value={editData.stock} onChange={e => handleChangeInput(e.target.value, 'stock')} />
+                        <Input type='number' placeholder='Price' min='1000' step='1000' name='product_price' required value={editData.price} onChange={e => handleChangeInput(e.target.value, 'price')} />
+                        <DropdownContainer itemStyle='full' appereance={<div className="w-full h-full flex items-center px-5">{editData.category}</div>} className='border h-[36px] rounded-[6px] shadow-sm'>
+                            {
+                                categoryDatas.map((category, index) => (
+                                    <DropdownItem key={index} onClickCallback={() => changeSelectedCategory(category.name)} className='capitalize'>
+                                        {category.name}
+                                    </DropdownItem>
+                                ))
+                            }
+                        </DropdownContainer>
+                        <Button className='col-span-2' type='submit'>Edit</Button>
+                    </form> :
+                    <div className="w-full grid grid-cols-2 gap-3 px-5">
+                        <h1 className='col-span-2'>Delete <b className='capitalize'>{editData.name}</b> Product?</h1>
+                        <Button className='bg-red-700' onClick={() => handleDelete('delete', '', editData.id)}>Yes</Button>
+                        <Button>No</Button>
+                    </div>
+            }
         </Modal>
     </>
 }

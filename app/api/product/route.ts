@@ -1,4 +1,4 @@
-import { getAllProducts } from "@/helper/db/product";
+import { deleteProductById, getAllProducts, getProductById } from "@/helper/db/product";
 import { query } from "@/lib/dbpool";
 import { getAllProductsReturnValue } from "@/types/products";
 import { NextRequest, NextResponse } from "next/server";
@@ -53,5 +53,20 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json(payload , {status: 200})
     } catch (error) {
         
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    try {
+        const body = await req.json()
+        const { id } = body;
+        const productDb = await getProductById(id)
+        if (!productDb) throw new Error('Data is not in db!')
+        const deleteResponse = await deleteProductById(id)
+        if(deleteResponse.status === 400) throw new Error('Failed to delete')
+        return NextResponse.json(productDb , {status: 200})
+    } catch (error) {
+        console.log(error)
+        return NextResponse.json('none' , {status: 400})
     }
 }
