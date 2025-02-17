@@ -1,13 +1,16 @@
 'use client'
 import { DropdownContainer, DropdownItem } from '@/components/client/dropdown';
 import { InputSearch } from '@/components/client/input';
+import Modal from '@/components/client/modal';
 import Tab, { TabItem } from '@/components/client/tab';
 import Title from '@/components/client/title';
+import { useModal } from '@/components/context/modalContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CategoryResponse } from '@/helper/db/category';
+import { formatToIDR } from '@/lib/utils';
 import { getAllProductsReturnValue } from '@/types/products';
-import { createContext, Dispatch, FC, FormEvent, SetStateAction, useContext, useState } from 'react';
+import { createContext, Dispatch, FC, FormEvent, SetStateAction, useContext, useEffect, useState } from 'react';
 import { z } from 'zod';
 
 interface _productsClientProps {
@@ -53,10 +56,34 @@ interface ListPageProps {
 
 const ListPage: FC<ListPageProps> = ({ }) => {
     const { pageStatus, setPageStatus, categoryDatas, productDatas } = useProductContext();
+    const { modalSetter, modalState } = useModal()
+    const [productDataByCategory, setProductDataByCategory] = useState(productDatas)
+    const [editData, setEditData] = useState({ productName: '', stock: 0, price: 0, category: 'Category' })
     const [selectedTab, setSelectedTab] = useState('all')
+    function changeSelectedCategory(value: string) {
+        setEditData(prev => ({ ...prev, category: value }))
+    }
+    function handleEdit(option: 'open' | 'edit', value: getAllProductsReturnValue) {
+        if (option == 'open') {
+            modalSetter('state', !modalState.isOpen)
+            setEditData({ productName: value.name, price: Number(value.price), category: value.category, stock: Number(value.stock) })
+        }
+    }
     function handleChangeTab(name: string) {
         setSelectedTab(name)
     }
+    useEffect(() => {
+        if (selectedTab != 'all') {
+            const prudctByCategory = productDatas.filter(product => product.category === selectedTab)
+            setProductDataByCategory(prudctByCategory)
+        } else {
+            setProductDataByCategory(productDatas)
+        }
+    }, [selectedTab])
+    useEffect(() => {
+        console.log(editData);
+
+    }, [editData])
     return <>
         <div className='w-full h-[50px] flex justify-between items-center'>
             <InputSearch />
@@ -72,7 +99,7 @@ const ListPage: FC<ListPageProps> = ({ }) => {
         </Tab>
         <div className="w-full my-5 flex gap-5">
             {
-                productDatas.map((product, index) => (
+                productDataByCategory.map((product, index) => (
                     <div className="w-[250px] overflow-hidden h-[350px] bg-white rounded-lg border shadow-md flex flex-col" key={index}>
                         <div className="h-[50%] w-full bg-zinc-100 relative">
                             <div className="w-fit h-fit px-3 py-1 text-sm border capitalize bg-zinc-50 rounded-full flex justify-end items-center absolute top-3 right-3">
@@ -80,14 +107,33 @@ const ListPage: FC<ListPageProps> = ({ }) => {
                             </div>
                         </div>
                         <div className="p-3 flex-1 flex flex-col">
-                            <h2 className='text-xl'>{product.name}</h2>
-                            <h2 className='text-lg text-slate-600'>Rp 10.000</h2>
-                            <Button className='w-full mt-auto'>Edit</Button>
+                            <h2 className='text-xl capitalize w-full relative'>{product.name} <span className='text-xs absolute right-0 px-2 py-1 bg-green-300 rounded-full'>{product.stock}</span></h2>
+                            <h2 className='text-lg text-slate-600'>{formatToIDR(Number(product.price))}</h2>
+                            <Button className='w-full mt-auto' onClick={() => handleEdit('open', product)}>Edit</Button>
                         </div>
                     </div>
-                )) && <p>NODATASS</p>
+                ))
             }
         </div>
+        <Modal >
+            {editData.productName.length > 0 &&
+                <form className='w-full grid grid-cols-2 gap-3 px-5'>
+                    <h1 className='col-span-2'>Edit Products</h1>
+                    <Input placeholder='Product name....' name='product_name' required value={editData.productName} />
+                    <Input type='number' placeholder='Stock' min='0' step='1' name='product_stock' required value={editData.stock} />
+                    <Input type='number' placeholder='Price' min='1000' step='1000' name='product_price' required value={editData.price} />
+                    <DropdownContainer itemStyle='full' appereance={<div className="w-full h-full flex items-center px-5">{editData.category}</div>} className='border h-[36px] rounded-[6px] shadow-sm'>
+                        {
+                            categoryDatas.map((category, index) => (
+                                <DropdownItem key={index} onClickCallback={() => changeSelectedCategory(category.name)} className='capitalize'>
+                                    {category.name}
+                                </DropdownItem>
+                            ))
+                        }
+                    </DropdownContainer>
+                    <Button className='col-span-2'>Edit</Button>
+                </form>}
+        </Modal>
     </>
 }
 
