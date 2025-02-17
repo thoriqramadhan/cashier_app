@@ -17,11 +17,11 @@ const Profile: FC<ProfileProps> = ({ }) => {
         router.push('/settings?tab=profile')
         setter('setPath', 'settings')
     }
-    return <DropdownContainer appereance={<div className="h-[36px] w-[36px] bg-zinc-50 rounded-full cursor-pointer"></div>}>
-        <DropdownItem onClick={() => redirectToProfile()}>
+    return <DropdownContainer appereance={<div className="h-[36px] w-[36px] bg-zinc-100 rounded-full cursor-pointer"></div>}>
+        <DropdownItem onClickCallback={() => redirectToProfile()}>
             Profile
         </DropdownItem>
-        <DropdownItem icon={<LogOut />} onClick={() => logout()}>
+        <DropdownItem icon={<LogOut />} onClickCallback={() => logout()}>
             Logout
         </DropdownItem>
     </DropdownContainer>
