@@ -54,20 +54,94 @@ const _productsClient: FC<_productsClientProps> = ({ categoryDatas, productDatas
 interface ListPageProps {
 }
 
+
+function checkIsDataValid(productName: string, stock: number, category: string, price: number) {
+    const errors = { product: '', stock: '', category: '', price: '' }
+    let isSuccess = true
+    const isProductValid = z.string().min(3).safeParse(productName)
+    const isStockValid = z.number().min(0).safeParse(stock)
+    const isPriceValid = z.number().min(0).safeParse(price)
+    const isCategoryValid = z.string().min(3).safeParse(category)
+    if (!isProductValid.success) {
+        errors.product = isProductValid.error.message
+        isSuccess = false
+    }
+    if (!isStockValid.success) {
+        errors.stock = isStockValid.error.message
+        isSuccess = false;
+    }
+    if (!isCategoryValid.success) {
+        errors.category = isCategoryValid.error.message
+        isSuccess = false
+    }
+    if (!isPriceValid.success) {
+        errors.price = isPriceValid.error.message
+        isSuccess = false
+    }
+    if (isSuccess) {
+        return { status: 200, errors }
+    } else {
+        return { status: 400, errors }
+    }
+}
 const ListPage: FC<ListPageProps> = ({ }) => {
+    const editDataInit = { name: '', stock: 0, price: 0, category: 'Category', id: 0 }
     const { pageStatus, setPageStatus, categoryDatas, productDatas } = useProductContext();
     const { modalSetter, modalState } = useModal()
     const [productDataByCategory, setProductDataByCategory] = useState(productDatas)
-    const [editData, setEditData] = useState({ productName: '', stock: 0, price: 0, category: 'Category' })
+    const [editData, setEditData] = useState(editDataInit)
     const [selectedTab, setSelectedTab] = useState('all')
     function changeSelectedCategory(value: string) {
         setEditData(prev => ({ ...prev, category: value }))
     }
-    function handleEdit(option: 'open' | 'edit', value: getAllProductsReturnValue) {
+    async function handleEdit(option: 'open' | 'edit', value: getAllProductsReturnValue, event?: FormEvent) {
         if (option == 'open') {
             modalSetter('state', !modalState.isOpen)
-            setEditData({ productName: value.name, price: Number(value.price), category: value.category, stock: Number(value.stock) })
+            setEditData({ name: value.name, price: Number(value.price), category: value.category, stock: Number(value.stock), id: Number(value.id) })
+        } else if (option == 'edit') {
+            event?.preventDefault()
+            const validationResult = checkIsDataValid(editData.name, editData.stock, editData.category, editData.price)
+            if (validationResult.status === 400) {
+                console.log(editData);
+                console.log(validationResult.errors);
+                return;
+            }
+            try {
+                const response = await fetch('/api/product', {
+                    method: 'PATCH',
+                    body: JSON.stringify({ payload: editData })
+                })
+                if (response.ok) {
+                    const newProductData = productDataByCategory.map(product => {
+                        if ((Number(product!.id)) == editData.id) {
+                            return {
+                                name: editData.name,
+                                stock: editData.stock.toString(),
+                                price: editData.price.toString(),
+                                category: editData.category,
+                                id: editData.id.toString()
+                            }
+                        }
+                        return product
+                    })
+                    setProductDataByCategory(newProductData)
+                    setEditData(editDataInit)
+                    modalSetter('state', !modalState.isOpen)
+                } else {
+                    throw new Error(response.statusText)
+                }
+            } catch (error) {
+                console.log(error)
+            }
         }
+    }
+    function handleChangeInput(newValue: string, propertyName: string) {
+        setEditData(prev => (
+            {
+                ...prev,
+                [propertyName]: propertyName == 'stock' || propertyName == 'price' ? Number(newValue) : newValue
+            }
+        ))
     }
     function handleChangeTab(name: string) {
         setSelectedTab(name)
@@ -80,10 +154,6 @@ const ListPage: FC<ListPageProps> = ({ }) => {
             setProductDataByCategory(productDatas)
         }
     }, [selectedTab])
-    useEffect(() => {
-        console.log(editData);
-
-    }, [editData])
     return <>
         <div className='w-full h-[50px] flex justify-between items-center'>
             <InputSearch />
@@ -116,12 +186,12 @@ const ListPage: FC<ListPageProps> = ({ }) => {
             }
         </div>
         <Modal >
-            {editData.productName.length > 0 &&
-                <form className='w-full grid grid-cols-2 gap-3 px-5'>
+            {editData.name.length > 0 &&
+                <form className='w-full grid grid-cols-2 gap-3 px-5' onSubmit={e => handleEdit('edit', editData, e)}>
                     <h1 className='col-span-2'>Edit Products</h1>
-                    <Input placeholder='Product name....' name='product_name' required value={editData.productName} />
-                    <Input type='number' placeholder='Stock' min='0' step='1' name='product_stock' required value={editData.stock} />
-                    <Input type='number' placeholder='Price' min='1000' step='1000' name='product_price' required value={editData.price} />
+                    <Input placeholder='Product name....' name='product_name' required value={editData.name} onChange={e => handleChangeInput(e.target.value, 'name')} />
+                    <Input type='number' placeholder='Stock' min='0' step='1' name='product_stock' required value={editData.stock} onChange={e => handleChangeInput(e.target.value, 'stock')} />
+                    <Input type='number' placeholder='Price' min='1000' step='1000' name='product_price' required value={editData.price} onChange={e => handleChangeInput(e.target.value, 'price')} />
                     <DropdownContainer itemStyle='full' appereance={<div className="w-full h-full flex items-center px-5">{editData.category}</div>} className='border h-[36px] rounded-[6px] shadow-sm'>
                         {
                             categoryDatas.map((category, index) => (
@@ -131,7 +201,7 @@ const ListPage: FC<ListPageProps> = ({ }) => {
                             ))
                         }
                     </DropdownContainer>
-                    <Button className='col-span-2'>Edit</Button>
+                    <Button className='col-span-2' type='submit'>Edit</Button>
                 </form>}
         </Modal>
     </>
@@ -147,35 +217,6 @@ const AddPage: FC<AddPageProps> = ({ }) => {
     const [selectedCategory, setSelectedCategory] = useState('Category')
     function changeSelectedCategory(value: string) {
         setSelectedCategory(value)
-    }
-    function checkIsDataValid(productName: string, stock: number, category: string, price: number) {
-        const errors = { product: '', stock: '', category: '', price: '' }
-        let isSuccess = true
-        const isProductValid = z.string().min(3).safeParse(productName)
-        const isStockValid = z.number().min(0).safeParse(stock)
-        const isPriceValid = z.number().min(0).safeParse(price)
-        const isCategoryValid = z.string().min(3).safeParse(category)
-        if (!isProductValid.success) {
-            errors.product = isProductValid.error.message
-            isSuccess = false
-        }
-        if (!isStockValid.success) {
-            errors.stock = isStockValid.error.message
-            isSuccess = false;
-        }
-        if (!isCategoryValid.success) {
-            errors.category = isCategoryValid.error.message
-            isSuccess = false
-        }
-        if (!isPriceValid.success) {
-            errors.price = isPriceValid.error.message
-            isSuccess = false
-        }
-        if (isSuccess) {
-            return { status: 200, errors }
-        } else {
-            return { status: 400, errors }
-        }
     }
     async function handleCreateProduct(event: FormEvent<HTMLFormElement>) {
         event.preventDefault()
