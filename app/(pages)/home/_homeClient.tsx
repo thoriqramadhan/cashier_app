@@ -29,7 +29,7 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     const [productDataByCategory, setProductDataByCategory] = useState(productDatas)
 
     const [selectedProducts, setSelectedProducts] = useState<CartProduct[]>([])
-    const [isCartOpen, setIsCartOpen] = useState(true)
+    const [isCartOpen, setIsCartOpen] = useState(false)
 
     // price
     const [prices, setPrices] = useState({ subtotal: 0, tax: 0, total: 0 })
@@ -76,6 +76,7 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     // refilter products arr when search is changed
     useEffect(() => {
         if (searchValue.value.length === 0) {
+            setSearchValue(prev => ({ ...prev, errorMsg: '' }))
             filterProductByCategory()
             return;
         }
@@ -118,13 +119,15 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
         </div>
 
         {/* cart */}
-        <span className={`block p-3 rounded-full bg-zinc-100 border w-fit absolute top-1/2 cursor-pointer transition-300 z-50 ${isCartOpen ? 'right-[270px]' : 'right-3'}`} onClick={() => setIsCartOpen(prev => !prev)} >
-            <ChevronLeft className={`transition-300 ${isCartOpen && 'rotate-180'}`} />
-        </span>
+        <div className={`h-screen w-px fixed top-0 right-3 z-50`}>
+            <span className={`block p-3 rounded-full bg-zinc-100 border w-fit absolute top-1/2 cursor-pointer transition-300 z-50 ${isCartOpen ? 'right-[270px]' : 'right-3'}`} onClick={() => setIsCartOpen(prev => !prev)} >
+                <ChevronLeft className={`transition-300 ${isCartOpen && 'rotate-180'}`} />
+            </span>
+        </div>
         <SelectedProductContext.Provider value={{ state: selectedProducts, setter: setSelectedProducts }}>
             <ProductCartList isCartOpen={isCartOpen} selectedProduct={{ state: selectedProducts, setter: setSelectedProducts }} prices={prices} />
         </SelectedProductContext.Provider >
-    </div>;
+    </div >;
 }
 
 
