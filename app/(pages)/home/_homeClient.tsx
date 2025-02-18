@@ -1,6 +1,7 @@
 'use client'
 import { InputSearch } from '@/components/client/input';
 import Tab, { TabItem } from '@/components/client/tab';
+import { ErrorText } from '@/components/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CategoryResponse } from '@/helper/db/category';
@@ -8,6 +9,7 @@ import { formatToIDR } from '@/lib/utils';
 import { CartProduct, getAllProductsReturnValue } from '@/types/products';
 import { ChevronLeft, Trash2 } from 'lucide-react';
 import { createContext, Dispatch, FC, SetStateAction, useContext, useEffect, useState } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
 
 interface _homeClientProps {
     categoryDatas: CategoryResponse[],
@@ -19,6 +21,10 @@ const SelectedProductContext = createContext<{ state: CartProduct[], setter: Dis
 })
 
 const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
+    const [searchValue, setSearchValue] = useState({
+        errorMsg: '',
+        value: ''
+    })
     const [selectedTab, setSelectedTab] = useState('all')
     const [productDataByCategory, setProductDataByCategory] = useState(productDatas)
 
@@ -36,14 +42,25 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
         if (isDuplicate) return;
         setSelectedProducts(prev => ([...prev, product]))
     }
-    useEffect(() => {
+    function filterProductByCategory() {
         if (selectedTab != 'all') {
             const prudctByCategory = productDatas.filter(product => product.category === selectedTab)
             setProductDataByCategory(prudctByCategory)
         } else {
             setProductDataByCategory(productDatas)
         }
+    }
+    const searchProducts = useDebouncedCallback(
+        (value: string) => {
+            setSearchValue(prev => ({ ...prev, value: value }))
+        },
+        500
+    )
+    // refiltering product array when tab is changed
+    useEffect(() => {
+        filterProductByCategory()
     }, [selectedTab])
+    // calculate total price & tax when products in cart (selectedProducts) is changed.
     useEffect(() => {
         if (selectedProducts.length > 0) {
             const subtotal = selectedProducts.reduce((acc, item) => (acc + item.totalPrice), 0);
@@ -56,8 +73,23 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
             })
         }
     }, [selectedProducts])
+    // refilter products arr when search is changed
+    useEffect(() => {
+        if (searchValue.value.length === 0) {
+            filterProductByCategory()
+            return;
+        }
+        const isSearchValid = productDatas.filter(product => product.name.toLowerCase().replace(/\s+/g, '').includes(searchValue.value.toLowerCase().replace(/\s+/g, '')))
+        if (isSearchValid.length === 0) {
+            setSearchValue(prev => ({ ...prev, errorMsg: 'No products found!' }))
+            return;
+        }
+        setProductDataByCategory(isSearchValid)
+
+    }, [searchValue])
     return <div className='px-5 w-full my-5 relative'>
-        <InputSearch className='py-2' placeHolder='Search products...' />
+        <InputSearch className='py-2' placeHolder='Search products...' onChange={(e) => searchProducts(e.target.value)} />
+        {searchValue.errorMsg.length > 0 && <ErrorText className='ml-3 mt-[3px]'>{searchValue.errorMsg}</ErrorText>}
         <Tab>
             <TabItem selectedTab={selectedTab} name='all' onClick={() => handleChangeTab('all')}>All</TabItem>
             {
@@ -66,10 +98,10 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
                 ))
             }
         </Tab>
-        <div className="w-full my-5 flex gap-5">
+        <div className="w-full my-5 flex gap-5 flex-wrap">
             {
                 productDataByCategory.map((product, index) => (
-                    <div className="w-[250px] overflow-hidden h-[350px] bg-white rounded-lg border shadow-md flex flex-col" key={index}>
+                    <div className="w-[250px] overflow-hidden h-[350px] bg-white rounded-lg border shadow-md flex flex-col shrink-0" key={index}>
                         <div className="h-[50%] w-full bg-zinc-100 relative">
                             <div className="w-fit h-fit px-3 py-1 text-sm border capitalize bg-zinc-50 rounded-full flex justify-end items-center absolute top-3 right-3">
                                 {product.category}
