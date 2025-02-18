@@ -21,10 +21,8 @@ const SelectedProductContext = createContext<{ state: CartProduct[], setter: Dis
 })
 
 const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
-    const [searchValue, setSearchValue] = useState({
-        errorMsg: '',
-        value: ''
-    })
+    const [searchValue, setSearchValue] = useState('')
+    const [searchErrorMsg, setSearchErrorMsg] = useState('')
     const [selectedTab, setSelectedTab] = useState('all')
     const [productDataByCategory, setProductDataByCategory] = useState(productDatas)
 
@@ -52,7 +50,7 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     }
     const searchProducts = useDebouncedCallback(
         (value: string) => {
-            setSearchValue(prev => ({ ...prev, value: value }))
+            setSearchValue(value)
         },
         500
     )
@@ -75,22 +73,25 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     }, [selectedProducts])
     // refilter products arr when search is changed
     useEffect(() => {
-        if (searchValue.value.length === 0) {
-            setSearchValue(prev => ({ ...prev, errorMsg: '' }))
+        if (searchValue.length === 0) {
+            setSearchErrorMsg('')
             filterProductByCategory()
             return;
         }
-        const isSearchValid = productDatas.filter(product => product.name.toLowerCase().replace(/\s+/g, '').includes(searchValue.value.toLowerCase().replace(/\s+/g, '')))
+        const isSearchValid = productDatas.filter(product => product.name.toLowerCase().replace(/\s+/g, '').includes(searchValue.toLowerCase().replace(/\s+/g, '')))
         if (isSearchValid.length === 0) {
-            setSearchValue(prev => ({ ...prev, errorMsg: 'No products found!' }))
+            setSearchErrorMsg('No products found!')
             return;
         }
         setProductDataByCategory(isSearchValid)
+        if (searchErrorMsg.length > 0) {
+            setSearchErrorMsg('')
+        }
 
     }, [searchValue])
     return <div className='px-5 w-full my-5 relative'>
         <InputSearch className='py-2' placeHolder='Search products...' onChange={(e) => searchProducts(e.target.value)} />
-        {searchValue.errorMsg.length > 0 && <ErrorText className='ml-3 mt-[3px]'>{searchValue.errorMsg}</ErrorText>}
+        {searchErrorMsg.length > 0 && <ErrorText className='ml-3 mt-[3px]'>{searchErrorMsg}</ErrorText>}
         <Tab>
             <TabItem selectedTab={selectedTab} name='all' onClick={() => handleChangeTab('all')}>All</TabItem>
             {
