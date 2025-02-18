@@ -5,3 +5,11 @@ export interface getAllProductsReturnValue {
     stock: string | number,
     price: string | number
 }
+
+export interface CartProduct {
+    id?: string,
+    name: string ,
+    qty: number,
+    price: number,
+    totalPrice: number
+}
