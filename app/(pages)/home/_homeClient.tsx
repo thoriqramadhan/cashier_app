@@ -60,6 +60,7 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     }, [selectedTab])
     // calculate total price & tax when products in cart (selectedProducts) is changed.
     useEffect(() => {
+        console.log(selectedProducts);
         if (selectedProducts.length > 0) {
             const subtotal = selectedProducts.reduce((acc, item) => (acc + item.totalPrice), 0);
             const tax = subtotal / 10;
@@ -139,6 +140,20 @@ interface ProductCartListProps {
 }
 
 const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct, prices }) => {
+    console.log(selectedProduct);
+    async function handlePayment() {
+        try {
+            const paymentResponse = await fetch('/api/payment', {
+                method: 'POST',
+                body: JSON.stringify({ selectedProduct: selectedProduct.state, totalPrice: prices.total })
+            })
+            const payment = await paymentResponse.json()
+            console.log(payment);
+
+        } catch (error) {
+
+        }
+    }
     return <div className={`w-[300px] border-l-[2px] h-screen fixed flex flex-col items-center bg-white rounded-tl-3xl rounded-bl-3xl overflow-hidden top-0 px-3 py-8 transition-300 z-10 gap-y-3 ${isCartOpen ? 'right-0' : '-right-[999px]'}`}>
         <Input placeholder='Customer Name....' className='w-full shrink-0' />
         <div className="flex-1 w-full overflow-y-auto scrollbar-thin space-y-2">
@@ -163,7 +178,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
             </div>
             <div className="flex gap-x-2 mt-2">
                 <Button className='flex-1'>Later</Button>
-                <Button className='flex-1'>Pay</Button>
+                <Button className='flex-1' onClick={() => handlePayment()}>Pay</Button>
             </div>
         </div>
     </div>;
