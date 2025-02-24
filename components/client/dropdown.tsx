@@ -7,17 +7,18 @@ import React, { createContext, FC, HTMLAttributes, ReactElement, useContext, use
 const DropdownContainerContext = createContext<DropdownContainerOutput>(undefined)
 
 interface DropdownSettingsProps {
-    children: React.ReactNode
+    children: React.ReactNode,
+    className?: string
 }
 
-export const DropdownSettings: FC<DropdownSettingsProps> = ({ children }) => {
+export const DropdownSettings: FC<DropdownSettingsProps> = ({ children, className }) => {
     const iconSize = 17;
     const iconColor = '#64748b'
     const [isOpen, setIsOpen] = useState(false)
     function handleDropdown() {
         setIsOpen(prev => !prev)
     }
-    return <span className='flex items-center relative flex-col'>
+    return <span className={cn('flex items-center relative flex-col', className)}>
         <Ellipsis size={iconSize} color={iconColor} className='cursor-pointer' onClick={() => setIsOpen(prev => !prev)} />
         <div className={`w-[100px] ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
             <DropdownContainerContext.Provider value={{ isOpen, handleDropdown }}>

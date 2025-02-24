@@ -5,14 +5,18 @@ import { formatToIDR } from '@/lib/utils';
 import { FC, useState } from 'react';
 import Title from '@/components/client/title';
 import { TransactionProductData } from '@/types/transaction';
+import { DropdownItem, DropdownSettings } from '@/components/client/dropdown';
+import { Check, Pencil, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface _ordersClientProps {
 }
 
 const _ordersClient: FC<_ordersClientProps> = ({ }) => {
     const { modalSetter, modalState } = useModal()
-    const transactionDetailDataInit: { customer_name: string, products_detail: TransactionProductData[] } = {
+    const transactionDetailDataInit: { customer_name: string, products_detail: TransactionProductData[], transaction_id: string } = {
         customer_name: '',
+        transaction_id: '0',
         products_detail: []
     }
     const [transactionDatas, setTransactionDatas] = useState(JSON.parse(localStorage.getItem('transaction')) ?? [])
@@ -26,8 +30,29 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
         const products_detail = transactionProductDatas.filter(item => item.transaction_id === id)
         console.log(transactionProductDatas);
 
-        setTransactionDetailData({ customer_name, products_detail })
+        setTransactionDetailData({ customer_name, products_detail, transaction_id: id })
         modalSetter('state', !modalState.isOpen)
+    }
+    async function addToHistory() {
+        const selectedProduct = transactionDetailData.products_detail.map(item => ({ id: item.product_id, name: item.name, qty: item.quantity, price: item.price, totalPrice: Number(item.quantity) * Number(item.price) }))
+        const totalPrice = transactionDatas.filter(item => item.id == transactionDetailData.transaction_id)[0].total_price
+        const response = await fetch('/api/payment', {
+            method: 'POST',
+            body: JSON.stringify({ selectedProduct, totalPrice, cust_name: transactionDetailData.customer_name })
+        })
+        if (response.ok) {
+            const newTransactionDatas = transactionDatas.filter(item => item.id != transactionDetailData.transaction_id)
+            setTransactionDatas(newTransactionDatas)
+            localStorage.setItem('transaction', JSON.stringify(newTransactionDatas))
+
+            const productDetail = JSON.parse(localStorage.getItem('transaction_detail'))
+            const newProductDetail = productDetail.filter(item => item.transaction_id != transactionDetailData.transaction_id)
+            localStorage.setItem('transaction_detail', JSON.stringify(newProductDetail))
+            setTransactionDetailData(transactionDetailDataInit)
+            modalSetter('state', !modalState)
+        }
+
+
     }
     return <>
         <table className='w-full mt-10 max-h-[300px] table-fixed'>
@@ -38,7 +63,6 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
                     <th>Transaction Date</th>
                     <th>Status</th>
                     <th>Total Price</th>
-                    <th>Action</th>
                 </tr>
             </thead>
             <tbody className='h-fit'>
@@ -50,13 +74,17 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
                             <td>{date.toLocaleDateString(item.transaction_date)}</td>
                             <td>{item.transaction_status ? 'Success' : 'Delayed'}</td>
                             <td>{formatToIDR(Number(item.total_price))}</td>
-                            <td></td>
                         </tr>
                     ))
                 }
             </tbody>
         </table>
-        <Modal className='space-y-3'>
+        <Modal className='space-y-3 relative'>
+            <DropdownSettings className='absolute top-4 right-4'>
+                <DropdownItem icon={<Trash2 />} >Delete</DropdownItem>
+                <DropdownItem icon={<Pencil />}>Edit</DropdownItem>
+                <DropdownItem icon={<Check />} onClickCallback={() => addToHistory()}>Done</DropdownItem>
+            </DropdownSettings>
             <Title title='Transaction Detail' className='text-xl' />
             <hr />
             <p>Customer : {transactionDetailData.customer_name}</p>
