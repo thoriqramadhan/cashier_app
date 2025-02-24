@@ -17,6 +17,7 @@ export const ModalContextProvider: FC<ModalContextProviderProps> = ({ children }
     }
     const [modalState, setModalState] = useState(stateInit)
     function handleModal(option: modalOptionArguments, value: boolean) {
+
         setModalState(prev => (
             {
                 isOpen: option == 'state' ? value : prev.isOpen

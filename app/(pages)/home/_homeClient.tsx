@@ -140,22 +140,24 @@ interface ProductCartListProps {
 }
 
 const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct, prices }) => {
-    console.log(selectedProduct);
+    const [customerName, setCustomerName] = useState('')
     async function handlePayment() {
+        if (customerName.length < 3) return;
         try {
             const paymentResponse = await fetch('/api/payment', {
                 method: 'POST',
-                body: JSON.stringify({ selectedProduct: selectedProduct.state, totalPrice: prices.total })
+                body: JSON.stringify({ selectedProduct: selectedProduct.state, totalPrice: prices.total, cust_name: customerName })
             })
             const payment = await paymentResponse.json()
             console.log(payment);
 
         } catch (error) {
+            console.log(error);
 
         }
     }
     return <div className={`w-[300px] border-l-[2px] h-screen fixed flex flex-col items-center bg-white rounded-tl-3xl rounded-bl-3xl overflow-hidden top-0 px-3 py-8 transition-300 z-10 gap-y-3 ${isCartOpen ? 'right-0' : '-right-[999px]'}`}>
-        <Input placeholder='Customer Name....' className='w-full shrink-0' />
+        <Input placeholder='Customer Name....' className='w-full shrink-0' value={customerName} onChange={(e) => setCustomerName(e.target.value)} required />
         <div className="flex-1 w-full overflow-y-auto scrollbar-thin space-y-2">
             {
                 selectedProduct.state.map((item, index) => (
@@ -189,7 +191,7 @@ interface CartCardProps {
     productData: CartProduct
 }
 
-const CartCard: FC<CartCardProps> = ({ productData }) => {
+export const CartCard: FC<CartCardProps> = ({ productData }) => {
     const cartDatInit = {
         totalPrice: productData.totalPrice,
         price: productData.price,
@@ -224,7 +226,7 @@ const CartCard: FC<CartCardProps> = ({ productData }) => {
         <div className="flex-1">
             <h3 className='font-medium text-lg'>{productData.name}</h3>
             <p className='text-sm'>{formatToIDR(cartData.totalPrice)}</p>
-        </div>S
+        </div>
         <div className="flex items-center justify-center gap-x-2 self-end h-fit w-fit absolute bottom-2 right-2">
             <Button className='px-2 py-1 h-fit' onClick={() => handleChangeQty('plus')}>+</Button>
             <input type="text" name="quantity" id="quantity" className='min-w-[20px] max-w-[24px] text-center focus:ring-0 focus:outline-none ' value={cartData.qty} onChange={(e) => setCartData(prev => ({ ...prev, qty: Number(e.target.value), totalPrice: prev.price * Number(e.target.value) }))} />
