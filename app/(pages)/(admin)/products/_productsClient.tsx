@@ -199,10 +199,10 @@ const ListPage: FC<ListPageProps> = ({ }) => {
                 ))
             }
         </Tab>
-        <div className="w-full my-5 flex gap-5">
+        <div className="w-full my-5 flex gap-5 flex-wrap">
             {
                 productDataByCategory.map((product, index) => (
-                    <div className="w-[250px] overflow-hidden h-[350px] bg-white rounded-lg border shadow-md flex flex-col" key={index}>
+                    <div className="w-[250px] overflow-hidden h-[350px] bg-white rounded-lg border shadow-md flex flex-col shrink-0" key={index}>
                         <div className="h-[50%] w-full bg-zinc-100 relative">
                             <div className="w-fit h-fit px-3 py-1 text-sm border capitalize bg-zinc-50 rounded-full flex justify-end items-center absolute top-3 right-3">
                                 {product.category}

@@ -20,3 +20,13 @@ export async function getAllTransactionProducts() : Promise<TransactionProductDa
         return []
     }
 }
+
+export async function getLastTransactionId() : Promise<TransactionData[]>{
+    try {
+        const response = await query('SELECT * FROM transaction ORDER BY id DESC LIMIT 1');
+        return response.rows[0].id as TransactionData[]
+    } catch (error) {
+        console.log(error)
+        return []
+   } 
+}

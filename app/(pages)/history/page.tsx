@@ -9,14 +9,12 @@ interface HistoryProps {
 const History: FC<HistoryProps> = async ({ }) => {
     const transactionDatas = await getAllTransactions()
     const transactionProductDatas = await getAllTransactionProducts()
-    console.log(transactionProductDatas);
-
     if (transactionDatas?.length == 0) {
         return <p>No datas</p>
     }
 
     return <div className='px-5 w-full my-5 relative'>
-        <Title title='History' desc='All of successfull transaction history.' />
+        <Title title='History' desc='All successfull transaction history.' />
         <_historyClient transactionDatas={transactionDatas} transactionProductDatas={transactionProductDatas} />
     </div>;
 }

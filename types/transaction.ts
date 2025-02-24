@@ -15,3 +15,7 @@ export interface TransactionProductData {
     name: string,
     quantity: string
 }
+
+export interface transactionGetMethodRequest{
+    option: 'lastId' | 'all'
+}

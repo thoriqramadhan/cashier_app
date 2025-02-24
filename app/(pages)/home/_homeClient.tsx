@@ -5,9 +5,11 @@ import { ErrorText } from '@/components/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CategoryResponse } from '@/helper/db/category';
+import { getLastTransactionId } from '@/helper/db/history';
 import { formatToIDR } from '@/lib/utils';
 import { CartProduct, getAllProductsReturnValue } from '@/types/products';
 import { ChevronLeft, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { createContext, Dispatch, FC, SetStateAction, useContext, useEffect, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
@@ -141,6 +143,8 @@ interface ProductCartListProps {
 
 const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct, prices }) => {
     const [customerName, setCustomerName] = useState('')
+    const router = useRouter()
+
     async function handlePayment() {
         if (customerName.length < 3) return;
         try {
@@ -154,6 +158,52 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
         } catch (error) {
             console.log(error);
 
+        }
+    }
+    async function handlePostponePayment() {
+        try {
+            if (customerName.length === 0) return;
+            const responseData = await fetch("/api/transaction?option=lastId", {
+                method: 'GET',
+            })
+            if (!responseData.ok) throw new Error(responseData.statusText)
+            const responseId = await responseData.json()
+            console.log(responseId);
+            const dateNow = Date.now()
+            const newTransactionData = {
+                id: responseId,
+                customer_name: customerName,
+                ordered_date: dateNow,
+                transaction_date: dateNow,
+                transaction_status: false,
+                total_price: prices.total
+            }
+            const newTransactionDetail = selectedProduct.state.map(product => ({
+                transaction_id: responseId,
+                product_id: product.id,
+                price: product.totalPrice,
+                name: product.name,
+                quantity: product.qty
+            }))
+            // localStorage data
+            const transactionStorage = JSON.parse(localStorage.getItem('transaction')) ?? [];
+            const transactionDetailStorage = JSON.parse(localStorage?.getItem('transaction_detail')) ?? [];
+            if (transactionStorage) {
+                const newTransactionArr = transactionStorage
+                newTransactionArr.push(newTransactionData)
+                localStorage.setItem('transaction', JSON.stringify(newTransactionArr))
+            } else {
+                localStorage.setItem('transaction', JSON.stringify([newTransactionData]))
+            }
+            if (transactionDetailStorage) {
+                transactionDetailStorage.push(...newTransactionDetail)
+                localStorage.setItem('transaction_detail', JSON.stringify(transactionDetailStorage))
+            } else {
+                localStorage.setItem('transaction_detail', JSON.stringify(newTransactionDetail))
+            }
+            router.push('/orders')
+        } catch (error) {
+            console.log(error);
         }
     }
     return <div className={`w-[300px] border-l-[2px] h-screen fixed flex flex-col items-center bg-white rounded-tl-3xl rounded-bl-3xl overflow-hidden top-0 px-3 py-8 transition-300 z-10 gap-y-3 ${isCartOpen ? 'right-0' : '-right-[999px]'}`}>
@@ -179,7 +229,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
                 <p className='font-bold'>{formatToIDR(prices.total)}</p>
             </div>
             <div className="flex gap-x-2 mt-2">
-                <Button className='flex-1'>Later</Button>
+                <Button className='flex-1' onClick={() => handlePostponePayment()}>Later</Button>
                 <Button className='flex-1' onClick={() => handlePayment()}>Pay</Button>
             </div>
         </div>
