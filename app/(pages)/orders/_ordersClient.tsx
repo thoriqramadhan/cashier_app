@@ -20,7 +20,6 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
         products_detail: []
     }
     const [transactionDatas, setTransactionDatas] = useState(JSON.parse(localStorage.getItem('transaction')) ?? [])
-    console.log(transactionDatas);
 
     const [transactionDetailData, setTransactionDetailData] = useState(transactionDetailDataInit)
     const date = new Date();
@@ -54,6 +53,15 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
 
 
     }
+    function deleteOrder() {
+        const transactionStorage = JSON.parse(localStorage.getItem('transaction'))
+        const transactionDetailStorage = JSON.parse(localStorage.getItem('transaction_detail'))
+        const newTransaction = transactionStorage.filter(item => item.id != transactionDetailData.transaction_id)
+        const newTransactionDetail = transactionDetailStorage.filter(item => item.transaction_id != transactionDetailData.transaction_id)
+        localStorage.setItem('transaction', JSON.stringify(newTransaction))
+        localStorage.setItem('transaction_detail', JSON.stringify(newTransactionDetail))
+        setTransactionDatas(newTransaction)
+    }
     return <>
         <table className='w-full mt-10 max-h-[300px] table-fixed'>
             <thead>
@@ -81,7 +89,7 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
         </table>
         <Modal className='space-y-3 relative'>
             <DropdownSettings className='absolute top-4 right-4'>
-                <DropdownItem icon={<Trash2 />} >Delete</DropdownItem>
+                <DropdownItem icon={<Trash2 />} onClickCallback={() => deleteOrder()}>Delete</DropdownItem>
                 <DropdownItem icon={<Pencil />}>Edit</DropdownItem>
                 <DropdownItem icon={<Check />} onClickCallback={() => addToHistory()}>Done</DropdownItem>
             </DropdownSettings>
