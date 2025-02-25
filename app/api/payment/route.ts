@@ -1,3 +1,4 @@
+import { updateStocks } from "@/helper/db/product";
 import { query } from "@/lib/dbpool";
 import { CartProduct } from "@/types/products";
 import { NextRequest, NextResponse } from "next/server";
@@ -11,6 +12,8 @@ export async function POST(req: NextRequest) {
         const transactionId = transactionResult.rows[0].id
         const productValues = selectedProduct.map(product => `(${transactionId} , ${product.id} , ${product.qty} , ${product.totalPrice} , '${product.name}')`).join(',')
         await query(`INSERT INTO transaction_product (transaction_id , product_id , quantity , price , name ) VALUES ${productValues}`)
+        const updateStockArgs = selectedProduct.map(item => ({id: item.id , qty: item.qty}))
+        await updateStocks(updateStockArgs)
         await query("COMMIT");
         return NextResponse.json(productValues , {status: 200})
     } catch (error) {
