@@ -3,8 +3,13 @@ export type modalOutput = {
     modalSetter: (option: modalOptionArguments , value: boolean) => void
 }
 
+export type DropdownContainerOutput = {
+    isOpen: boolean,
+    handleDropdown: () => void
+}
+
 export type modalState = {
     isOpen: boolean,
 }
 
-export type modalOptionArguments = 'state'
+export type modalOptionArguments = 'state' 

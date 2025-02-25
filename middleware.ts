@@ -10,7 +10,6 @@ export async function middleware(request: NextRequest) {
     const publicRoute = ['/login'];
     const adminRoute = ['/products' , '/category']
     const pathNow = request.nextUrl.pathname;
-    
     // path chechker
     const isInPublicRoute = publicRoute.includes(pathNow)
     const isInAdminROute = adminRoute.includes(pathNow);
@@ -28,14 +27,33 @@ export async function middleware(request: NextRequest) {
     // const headers = new Headers(request.headers)
     // headers.set("x-current-path" , request.nextUrl.pathname)
 
+    if (pathNow == '/' && authInfo && !isAdmin) {
+        const response = NextResponse.redirect(new URL('/home', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    } else if (pathNow == '/' && !authInfo) {
+        const response = NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    } else if (pathNow == '/' && authInfo && isAdmin) {
+        const response = NextResponse.redirect(new URL('/products', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    }
     if (!isInPublicRoute && !authInfo) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl.origin)).headers.set('x-current-path' , request.nextUrl.pathname);
+        const response = NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
     } else if (isInPublicRoute && authInfo) {
-        return NextResponse.redirect(new URL('/home', request.nextUrl.origin)).headers.set('x-current-path' , request.nextUrl.pathname);
+        const response = NextResponse.redirect(new URL('/home', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
     } else if (isInAdminROute && !isAdmin) {
         return NextResponse.rewrite(new URL('/404' , request.url))
     }
-    return NextResponse.next().headers.set('x-current-path' , request.nextUrl.pathname);
+    const response = NextResponse.next();
+    response.headers.set('x-current-path', request.nextUrl.pathname)
+    return response;
 }
 
 // See "Matching Paths" below to learn more

@@ -9,7 +9,7 @@ export async function getAllCategory(){
     }
 }
 
-interface CategoryResponse  {
+export interface CategoryResponse  {
     name: string
 }
 export async function createCategoryDB(value: string): Promise<{status: number}> {
@@ -21,6 +21,21 @@ export async function createCategoryDB(value: string): Promise<{status: number}>
         }
         await query('INSERT INTO category (name) VALUES ($1)', [value])
         return {status:200}
+    } catch (error) {
+        console.log('Error creating category :')
+        throw new Error('Error creating category :' , error)
+    }
+}
+
+export async function deleteCategoryDB(category: string) : Promise<{status: number}>{
+    try {
+        const categorys = await getAllCategory()
+        const isCatogoryAvailable = categorys.filter(item => item.name === category);
+        if (isCatogoryAvailable.length == 0) {
+            return {status: 400}
+        }
+        await query("DELETE FROM category WHERE name = $1", [category])
+        return {status: 200}
     } catch (error) {
         console.log('Error creating category :')
         throw new Error('Error creating category :' , error)

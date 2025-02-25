@@ -1,1 +1,1 @@
-INSERT INTO users(username , email , password , role) VALUES ('admin' , 'admin@gmail.com' , '123321' , 'admin');
+INSERT INTO transaction (ordered_date , transaction_date , transaction_status , total_price) VALUES ()
