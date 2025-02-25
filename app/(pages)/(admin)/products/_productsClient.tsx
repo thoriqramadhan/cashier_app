@@ -102,6 +102,7 @@ const ListPage: FC<ListPageProps> = ({ }) => {
     }
     async function handleEdit(option: 'open' | 'edit', value: getAllProductsReturnValue, event?: FormEvent) {
         if (option == 'open') {
+            setModalType('edit')
             modalSetter('state', !modalState.isOpen)
             setEditData({ name: value.name, price: Number(value.price), category: value.category, stock: Number(value.stock), id: Number(value.id) })
 
@@ -240,7 +241,7 @@ const ListPage: FC<ListPageProps> = ({ }) => {
                     <div className="w-full grid grid-cols-2 gap-3 px-5">
                         <h1 className='col-span-2'>Delete <b className='capitalize'>{editData.name}</b> Product?</h1>
                         <Button className='bg-red-700' onClick={() => handleDelete('delete', '', editData.id)}>Yes</Button>
-                        <Button>No</Button>
+                        <Button onClick={() => modalSetter('state', !modalState.isOpen)}>No</Button>
                     </div>
             }
         </Modal>
