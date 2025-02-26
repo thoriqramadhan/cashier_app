@@ -62,7 +62,6 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     }, [selectedTab])
     // calculate total price & tax when products in cart (selectedProducts) is changed.
     useEffect(() => {
-        console.log(selectedProducts);
         if (selectedProducts.length > 0) {
             const subtotal = selectedProducts.reduce((acc, item) => (acc + item.totalPrice), 0);
             const tax = subtotal / 10;
@@ -163,15 +162,24 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
     async function handlePostponePayment() {
         try {
             if (customerName.length === 0) return;
-            const responseData = await fetch("/api/transaction?option=lastId", {
-                method: 'GET',
-            })
-            if (!responseData.ok) throw new Error(responseData.statusText)
-            const responseId = await responseData.json()
-            console.log(responseId);
+            const transactionStorage = JSON.parse(localStorage.getItem('transaction')) ?? [];
+            const transactionDetailStorage = JSON.parse(localStorage?.getItem('transaction_detail')) ?? [];
+            let newLastTransactionId = 0;
+            let responseId = 0;
+            if (transactionStorage.length > 0) {
+                newLastTransactionId = Number(transactionStorage[transactionStorage.length - 1].id) + 1
+            } else {
+                const responseData = await fetch("/api/transaction?option=lastId", {
+                    method: 'GET',
+                })
+                if (!responseData.ok) {
+                    throw new Error(responseData.statusText)
+                }
+                responseId = Number(await responseData.json()) + 1
+            }
             const dateNow = Date.now()
             const newTransactionData = {
-                id: responseId,
+                id: newLastTransactionId ? newLastTransactionId.toString() : responseId.toString(),
                 customer_name: customerName,
                 ordered_date: dateNow,
                 transaction_date: dateNow,
@@ -179,15 +187,13 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
                 total_price: prices.total
             }
             const newTransactionDetail = selectedProduct.state.map(product => ({
-                transaction_id: responseId,
+                transaction_id: newLastTransactionId ? newLastTransactionId.toString() : responseId.toString(),
                 product_id: product.id,
                 price: product.totalPrice,
                 name: product.name,
                 quantity: product.qty
             }))
             // localStorage data
-            const transactionStorage = JSON.parse(localStorage.getItem('transaction')) ?? [];
-            const transactionDetailStorage = JSON.parse(localStorage?.getItem('transaction_detail')) ?? [];
             if (transactionStorage) {
                 const newTransactionArr = transactionStorage
                 newTransactionArr.push(newTransactionData)
