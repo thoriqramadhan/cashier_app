@@ -164,10 +164,12 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
     async function handlePostponePayment() {
         try {
             if (customerName.length === 0) return;
+            // get transaction & transactionDetail
             const transactionStorage = JSON.parse(localStorage.getItem('transaction')) ?? [];
             const transactionDetailStorage = JSON.parse(localStorage?.getItem('transaction_detail')) ?? [];
             let newLastTransactionId = 0;
             let responseId = 0;
+            // if localstorage was available use lastest TransactionId from localStorage else use from db
             if (transactionStorage.length > 0) {
                 newLastTransactionId = Number(transactionStorage[transactionStorage.length - 1].id) + 1
             } else {
@@ -179,6 +181,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
                 }
                 responseId = Number(await responseData.json()) + 1
             }
+            // initiate new Transaction & transactionDetail
             const dateNow = Date.now()
             const newTransactionData = {
                 id: newLastTransactionId ? newLastTransactionId.toString() : responseId.toString(),
@@ -195,7 +198,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
                 name: product.name,
                 quantity: product.qty
             }))
-            // localStorage data
+            // if localstorage data was available update storage array with new data else make new storage 
             if (transactionStorage) {
                 const newTransactionArr = transactionStorage
                 newTransactionArr.push(newTransactionData)
@@ -209,6 +212,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
             } else {
                 localStorage.setItem('transaction_detail', JSON.stringify(newTransactionDetail))
             }
+            // setPath to orders and sidebar value
             router.push('/orders')
             setSidebar('setPath', 'orders')
         } catch (error) {
