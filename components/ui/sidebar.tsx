@@ -80,6 +80,9 @@ const SidebarItem: FC<SidebarItemProps> = ({ sidebarValue, pathNow, isAdmin }) =
     const { state, setter } = useSidebar()
     const isSelected = pathNow === sidebarValue.name
     // set visibility by role & condition'
+    /* con 1 if sidebarOption for admin will be hidden for cashier , con 2 if sidebarOption for admin and role is admin will be shown on ui
+    ,con 3 if sidebarOption is not for admin and general and user role is admin will be hidden ,  
+    */
     return <Link className={cn(sidebarValue.admin && 'hidden', sidebarValue.admin && isAdmin && 'block', !sidebarValue?.admin && isAdmin && !sidebarValue.general && 'hidden', !state.sidebarStatus && 'hidden')
     } href={`/${sidebarValue.name}`} onClick={() => setter('setPath', sidebarValue.name as pathOption)}>
         <div className={`px-3 py-2 w-fit rounded-md flex flex-col items-center justify-center cursor-pointer  ${isSelected && 'border-green-300 border bg-green-100/30'}`}>

@@ -1,6 +1,7 @@
 'use client'
 import { InputSearch } from '@/components/client/input';
 import Tab, { TabItem } from '@/components/client/tab';
+import { useSidebar } from '@/components/context/sidebarContext';
 import { ErrorText } from '@/components/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -143,6 +144,7 @@ interface ProductCartListProps {
 const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct, prices }) => {
     const [customerName, setCustomerName] = useState('')
     const router = useRouter()
+    const { setter: setSidebar } = useSidebar()
 
     async function handlePayment() {
         if (customerName.length < 3) return;
@@ -208,6 +210,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
                 localStorage.setItem('transaction_detail', JSON.stringify(newTransactionDetail))
             }
             router.push('/orders')
+            setSidebar('setPath', 'orders')
         } catch (error) {
             console.log(error);
         }
