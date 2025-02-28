@@ -1,5 +1,5 @@
 'use client'
-import { BaggageClaim, BookUser, ChartColumnStacked, Clock, Contact, House, Settings, Utensils } from 'lucide-react';
+import { BaggageClaim, BookUser, ChartArea, ChartColumnStacked, Clock, Contact, House, Settings, Utensils } from 'lucide-react';
 import React, { cloneElement, FC } from 'react';
 import Link from 'next/link';
 
@@ -49,10 +49,15 @@ const Sidebar: FC<SidebarProps> = ({ }) => {
             admin: true
         },
         {
+            name: 'recap',
+            icon: <ChartArea />,
+            admin: true
+        },
+        {
             name: 'settings',
             icon: <Settings />,
             general: true
-        }
+        },
     ]
     return <div className={`h-screen bg-white shadow-lg border-r transition-300 flex flex-col items-center gap-y-5 ${state.sidebarStatus ? 'w-[150px] px-3 py-6' : 'w-0 opacity-0'}`}>
         {
@@ -80,7 +85,8 @@ const SidebarItem: FC<SidebarItemProps> = ({ sidebarValue, pathNow, isAdmin }) =
     const { state, setter } = useSidebar()
     const isSelected = pathNow === sidebarValue.name
     // set visibility by role & condition'
-    /* con 1 if sidebarOption for admin will be hidden for cashier , con 2 if sidebarOption for admin and role is admin will be shown on ui
+    /* Link Class Explanation : 
+     con 1 if sidebarOption for admin will be hidden for cashier , con 2 if sidebarOption for admin and role is admin will be shown on ui
     ,con 3 if sidebarOption is not for admin and general and user role is admin will be hidden ,  
     */
     return <Link className={cn(sidebarValue.admin && 'hidden', sidebarValue.admin && isAdmin && 'block', !sidebarValue?.admin && isAdmin && !sidebarValue.general && 'hidden', !state.sidebarStatus && 'hidden')
