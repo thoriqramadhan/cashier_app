@@ -40,7 +40,7 @@ const Page: FC<PageProps> = async ({ }) => {
             </div>
         </div>
         <div className="w-full space-y-5 mt-5">
-            <Title title='Income Recap' desc='Income recap is available by yearly , monthly , date' />
+            <Title title='Income Recap' desc='Income recap is available by Yearly , Monthly , Date' />
             <_recapClient />
         </div>
     </div>
