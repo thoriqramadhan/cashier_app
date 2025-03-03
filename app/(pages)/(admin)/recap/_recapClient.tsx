@@ -1,15 +1,15 @@
 'use client'
-import { FC, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { Chart as ChartJs, CategoryScale, LinearScale, PointElement, LineElement, Title as ChartJsTitle, Tooltip, Legend } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import { TransactionRecap } from '@/types/transaction';
 import { DropdownContainer, DropdownItem } from '@/components/client/dropdown';
+import { number } from 'zod';
 
 interface _recapClientProps {
-    yearlyData: TransactionRecap[]
 }
 
-const _recapClient: FC<_recapClientProps> = ({ yearlyData }) => {
+const _recapClient: FC<_recapClientProps> = ({ }) => {
     const chartDataType = ['Year', 'Month', 'Date']
     const months = Array.from({ length: 12 }, (_, i) => ({
         value: i + 1,
@@ -28,6 +28,11 @@ const _recapClient: FC<_recapClientProps> = ({ yearlyData }) => {
         month: new Date().toLocaleString('en-US', { month: 'long' }),
         date: new Date().getDate()
     })
+    type chartValueType = {
+        totalIncome: number
+    }
+    const [chartValue, setChartValue] = useState<chartValueType[]>([])
+
     // mendaftarkan utils yang mau dipakai di charJS
     ChartJs.register(CategoryScale, LinearScale, PointElement, LineElement, ChartJsTitle, Tooltip, Legend)
     const labels = months.map(item => item.name)
@@ -39,37 +44,76 @@ const _recapClient: FC<_recapClientProps> = ({ yearlyData }) => {
             },
         }
     }
-
-    const filteredYearlyData = yearlyData.map(data => {
-        const [year, month] = data.month.split('-')
-        return { ...data, month: labels[parseInt(month)] }
-    })
-    const newYearChartData = labels.map((item) => {
-        const datas = filteredYearlyData.map(yearData => {
-            if (item === yearData.month) {
-                return {
-                    month: item,
-                    totalIncome: Number(yearData.total_income)
-                }
-            }
-            return {
-                month: item,
-                totalIncome: 0
-            }
-        })
-        return datas[0]
-    })
+    const labelBy = chartDataBy === 'Year' ? labels : chartDataBy === 'Month' ? getDaysInMonth(dateToFilter.year, 2) : [0, 1, 2]
     const chartData = {
-        labels,
+        labels: labelBy,
         datasets: [
             {
                 label: chartDataBy,
-                data: newYearChartData.map(chartData => chartData.totalIncome),
+                data: chartValue.length > 0 ? chartValue.map(chartData => chartData.total_income) : [],
                 borderColor: 'rgb(255, 99, 132)',
                 backgroundColor: 'rgba(255, 99, 132, 0.5)',
             }
         ]
     }
+    console.log(dateToFilter);
+
+    useEffect(() => {
+        const getByMonth = async () => {
+            try {
+                const response = await fetch(`/api/recap/month?year=${dateToFilter.year}&month=${labels.indexOf(dateToFilter.month) + 1}`, {
+                    method: 'GET'
+                })
+                if (!response.ok) throw new Error(`Failed to fetch recap : ${response.statusText}`)
+                const responseData = await response.json()
+                const filteredResponse = responseData.map(item => ({ ...item, transaction_date: new Date(item.transaction_date).getDate() }))
+                const totalDates = getDaysInMonth(dateToFilter.year, 2)
+                const newChartValue = totalDates.map(item => {
+                    const transaction = filteredResponse.find(response => response.transaction_date === item)
+                    return {
+                        item,
+                        total_income: transaction ? Number(transaction?.total_income) : 0
+                    }
+                })
+
+                setChartValue(newChartValue)
+            } catch (error) {
+                console.log(error);
+
+            }
+        }
+        const getByYear = async () => {
+            try {
+                const response = await fetch(`/api/recap/year?year=${dateToFilter.year}`, {
+                    method: 'GET'
+                })
+                if (!response.ok) throw new Error(`Failed to fetch recap : ${response.statusText}`)
+                const responseData = await response.json()
+                const filteredYearlyData = responseData.map(data => {
+                    const [year, month] = data.month.split('-')
+                    return { ...data, month: labels[parseInt(month)] }
+                })
+                const newChartValue = labels.map(month => {
+                    const isValid = filteredYearlyData.find(item => item.month === month)
+                    return {
+                        total_income: isValid ? Number(isValid.total_income) : 0
+                    }
+                })
+                setChartValue(newChartValue)
+            } catch (error) {
+                console.log(error);
+            }
+        }
+        if (chartDataBy === 'Month') {
+            getByMonth()
+        } else if (chartDataBy === 'Year') {
+            getByYear()
+        }
+    }, [dateToFilter, chartDataBy])
+    useEffect(() => {
+        console.log(chartValue, chartData);
+
+    }, [chartValue])
 
     // memakai react-chart diatas ChartJs
     return <>

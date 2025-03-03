@@ -1,5 +1,5 @@
 import Title from '@/components/client/title';
-import { getTransactionRecap } from '@/helper/db/transaction';
+import { getTransactionRecap, getTransactionRecapByMonth } from '@/helper/db/transaction';
 import { formatToIDR } from '@/lib/utils';
 import _recapClient from './_recapClient';
 import { FC } from 'react';
@@ -41,7 +41,7 @@ const Page: FC<PageProps> = async ({ }) => {
         </div>
         <div className="w-full space-y-5 mt-5">
             <Title title='Income Recap' desc='Income recap is available by yearly , monthly , date' />
-            <_recapClient yearlyData={yearlyRecap} />
+            <_recapClient />
         </div>
     </div>
 }
