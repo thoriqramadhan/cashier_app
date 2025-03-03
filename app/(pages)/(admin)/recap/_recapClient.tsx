@@ -127,7 +127,7 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
         <div className="w-full flex justify-between">
             <div className="">
                 {/* filter type */}
-                <DropdownContainer appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{chartDataBy}</div>}>
+                <DropdownContainer appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm ">{chartDataBy}</div>}>
                     {
                         chartDataType.map((item, index) => (<DropdownItem key={index} onClickCallback={() => setChartDataBy(item)}>{item}</DropdownItem>))
                     }
@@ -142,15 +142,15 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
                     }
                 </DropdownContainer>
                 {/* month */}
-                <DropdownContainer appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{dateToFilter.month}</div>}>
+                <DropdownContainer disabled={chartDataBy == 'Year'} appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{dateToFilter.month}</div>}>
                     {
                         months.map((item, index) => (<DropdownItem key={index} onClickCallback={() => setDateToFilter(prev => ({
                             ...prev, month: item.name
                         }))}>{item.name}</DropdownItem>))
                     }
-                </DropdownContainer>
+                </DropdownContainer >
                 {/* date */}
-                <DropdownContainer appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{dateToFilter.date}</div>}>
+                <DropdownContainer disabled={chartDataBy == 'Year' || chartDataBy === 'Month'} appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{dateToFilter.date}</div>}>
                     {
                         getDaysInMonth(dateToFilter.year, 2).map((item, index) => (<DropdownItem key={index} onClickCallback={() => setDateToFilter(prev => ({ ...prev, date: item }))}>{item}</DropdownItem>))
                     }
