@@ -4,7 +4,7 @@ import { Chart as ChartJs, CategoryScale, LinearScale, PointElement, LineElement
 import { Line } from 'react-chartjs-2';
 import { TransactionRecap } from '@/types/transaction';
 import { DropdownContainer, DropdownItem } from '@/components/client/dropdown';
-import { number } from 'zod';
+import { Loading } from '@/components/ui/loading';
 
 interface _recapClientProps {
 }
@@ -21,6 +21,10 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
         const days = new Date(year, month, 0).getDate()
         return Array.from({ length: days }, (_, i) => i + 1)
     }
+    // loading state
+    const [loading, setLoading] = useState({
+        chart: false
+    })
 
     const [chartDataBy, setChartDataBy] = useState(chartDataType[0])
     const [dateToFilter, setDateToFilter] = useState({
@@ -56,7 +60,6 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
             }
         ]
     }
-    console.log(dateToFilter);
 
     useEffect(() => {
         const getByMonth = async () => {
@@ -64,6 +67,7 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
                 const response = await fetch(`/api/recap/month?year=${dateToFilter.year}&month=${labels.indexOf(dateToFilter.month) + 1}`, {
                     method: 'GET'
                 })
+                setLoading(prev => ({ ...prev, chart: true }))
                 if (!response.ok) throw new Error(`Failed to fetch recap : ${response.statusText}`)
                 const responseData = await response.json()
                 const filteredResponse = responseData.map(item => ({ ...item, transaction_date: new Date(item.transaction_date).getDate() }))
@@ -75,11 +79,11 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
                         total_income: transaction ? Number(transaction?.total_income) : 0
                     }
                 })
-
                 setChartValue(newChartValue)
+                setLoading(prev => ({ ...prev, chart: false }))
             } catch (error) {
                 console.log(error);
-
+                setLoading(prev => ({ ...prev, chart: false }))
             }
         }
         const getByYear = async () => {
@@ -87,6 +91,7 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
                 const response = await fetch(`/api/recap/year?year=${dateToFilter.year}`, {
                     method: 'GET'
                 })
+                setLoading(prev => ({ ...prev, chart: true }))
                 if (!response.ok) throw new Error(`Failed to fetch recap : ${response.statusText}`)
                 const responseData = await response.json()
                 const filteredYearlyData = responseData.map(data => {
@@ -100,8 +105,10 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
                     }
                 })
                 setChartValue(newChartValue)
+                setLoading(prev => ({ ...prev, chart: false }))
             } catch (error) {
                 console.log(error);
+                setLoading(prev => ({ ...prev, chart: false }))
             }
         }
         if (chartDataBy === 'Month') {
@@ -151,7 +158,13 @@ const _recapClient: FC<_recapClientProps> = ({ }) => {
             </div>
 
         </div>
-        <Line data={chartData} options={chartOption} />
+        {
+            loading.chart ?
+                <div className="w-full h-[400px] flex justify-center items-center">
+                    <Loading size={50} />
+                </div> :
+                <Line data={chartData} options={chartOption} />
+        }
     </>
 }
 
