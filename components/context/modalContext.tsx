@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, FC } from "react"
+import React, { createContext, useContext, useState, FC, useEffect } from "react"
 import { modalOptionArguments, modalOutput } from "@/types/context";
 
 

@@ -37,7 +37,6 @@ interface DropdownContainerProps {
 }
 
 export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children, className, itemStyle = 'default', disabled = false }) => {
-    console.log(appereance)
     const [isOpen, setIsOpen] = useState(false)
     function handleDropdown() {
         setIsOpen(prev => !prev)
