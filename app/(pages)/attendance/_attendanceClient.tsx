@@ -13,6 +13,7 @@ import Flatpickr from 'react-flatpickr'
 import "flatpickr/dist/flatpickr.min.css";
 import { ClockArrowDown, ClockArrowUp, FileCheck, History, MousePointerClick } from 'lucide-react';
 import React, { FC, useEffect, useState } from 'react';
+import { UserSafe } from '@/types/login';
 
 interface _attendanceClientProps {
     userId: string | number,
