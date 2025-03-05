@@ -72,8 +72,17 @@ export function LoginForm({
     setIsLoading(true)
 
     const result = await login({ email, password });
+    console.log(result);
     if (result.status == 400) {
-      setMessage(result)
+      setMessage(prev => (
+        {
+          status: prev.status,
+          error: {
+            ...prev.error,
+            password: result.error.password
+          }
+        }
+      ))
     } else {
       router.push('/')
     }
@@ -110,7 +119,7 @@ export function LoginForm({
                   <Label htmlFor="password" className="self-start">Password</Label>
                   <Input id="password" type="password" name="password" required />
                   {
-                    message.error.email && <ErrorText className="self-start">{message.error.email}</ErrorText>
+                    message.error.password && <ErrorText className="self-start">{message.error.password}</ErrorText>
                   }
                   <a
                     href="#"

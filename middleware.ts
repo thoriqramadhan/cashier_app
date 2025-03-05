@@ -2,30 +2,58 @@ import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { decrypt } from './lib/auth/jwt'
+import { jwtPayload } from './types/login';
  
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
+    // registered route
     const publicRoute = ['/login'];
+    const adminRoute = ['/products' , '/category']
     const pathNow = request.nextUrl.pathname;
+    // path chechker
     const isInPublicRoute = publicRoute.includes(pathNow)
+    const isInAdminROute = adminRoute.includes(pathNow);
     const cookiesStore = await cookies()
     const jwtSignature = cookiesStore.get('session')?.value
 
     let authInfo;
+    let isAdmin = false;
     try {
-        authInfo = await decrypt(jwtSignature);
+        authInfo = await decrypt(jwtSignature) as jwtPayload;
+        isAdmin = authInfo.role === 'admin';
     } catch (error) {
         authInfo = false;
     }
-    const headers = new Headers(request.headers)
-    headers.set("x-current-path" , request.nextUrl.pathname)
+    // const headers = new Headers(request.headers)
+    // headers.set("x-current-path" , request.nextUrl.pathname)
 
-    if (!isInPublicRoute && !authInfo) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl.origin) , {headers});
-    } else if (isInPublicRoute && authInfo) {
-        return NextResponse.redirect(new URL('/home' , request.nextUrl.origin) ,{headers})
+    if (pathNow == '/' && authInfo && !isAdmin) {
+        const response = NextResponse.redirect(new URL('/home', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    } else if (pathNow == '/' && !authInfo) {
+        const response = NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    } else if (pathNow == '/' && authInfo && isAdmin) {
+        const response = NextResponse.redirect(new URL('/products', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
     }
-    return NextResponse.next({headers})
+    if (!isInPublicRoute && !authInfo) {
+        const response = NextResponse.redirect(new URL('/login', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    } else if (isInPublicRoute && authInfo) {
+        const response = NextResponse.redirect(new URL('/home', request.nextUrl.origin));
+        response.headers.set('x-current-path', request.nextUrl.pathname)
+        return response;
+    } else if (isInAdminROute && !isAdmin) {
+        return NextResponse.rewrite(new URL('/404' , request.url))
+    }
+    const response = NextResponse.next();
+    response.headers.set('x-current-path', request.nextUrl.pathname)
+    return response;
 }
 
 // See "Matching Paths" below to learn more

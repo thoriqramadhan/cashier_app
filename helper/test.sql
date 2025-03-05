@@ -1,1 +1,1 @@
-INSERT INTO users(username , email , password , role) VALUES ('admin' , 'admin@gmail.com' , '123321' , 'admin');
+INSERT INTO attendance(userId , date , status) VALUES ($1 , $2 , $3);

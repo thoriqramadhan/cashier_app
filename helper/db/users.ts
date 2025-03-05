@@ -1,4 +1,5 @@
 import { query } from "@/lib/dbpool";
+import { UserDb } from "@/types/login";
 
 type userIdentifier = 'id' | 'email';
 function userIdentifierBuilder(identifier: userIdentifier) {
@@ -30,5 +31,23 @@ export async function getUser(identifier: userIdentifier[], value: string[]) {
     } catch (error) {
         console.log(error)
         throw new Error(error)
+    }
+}
+
+export async function createUser({name , email , password , role}: {name: string , email : string, password : string, role: string} ) {
+    try {
+        await query('INSERT INTO users(username , email , password , role) VALUES ( $1 , $2 , $3 , $4)' , [name, email,password,role])
+    } catch (error) {
+        
+    }
+}
+
+export async function getAllUsers() : Promise<UserDb[]>{
+    try {
+        const response = await query('SELECT * FROM users');
+        return response.rows;
+    } catch (error) {
+        console.log(error)
+        return []
     }
 }

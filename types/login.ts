@@ -28,3 +28,9 @@ export type UserDb = {
     password: string,
     role: string
 }
+
+export type UserSafe = {
+    id: string,
+    username: string,
+    role: string
+}

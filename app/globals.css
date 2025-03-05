@@ -71,8 +71,36 @@ body {
   }
 }
 
+@keyframes skeleton-loading {
+  0% {
+    background-color: #e0e0e0;
+  }
+  50% {
+    background-color: #c0c0c0;
+  }
+  100% {
+    background-color: #e0e0e0;
+  }
+}
+
+.skeleton {
+  animation: skeleton-loading 1.5s infinite ease-in-out;
+}
+
+
 @layer utilities {
   .transition-300 {
     @apply transition-all duration-300
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    height: 5px; /* Scrollbar horizontal */
+    width: 5px; /* Scrollbar vertikal */
+}
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background-color: #888;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-zinc-200
   }
 }
