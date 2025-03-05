@@ -28,3 +28,13 @@ export async function getTodaysAttendanceInfo(userId: string) : Promise<Attendan
         return []
     }
 }
+
+export async function getAllAttendanceBy(option: 'date' | 'month' | 'year' , value): Promise<AttendanceInfo[]> {
+    try {
+        const response = await query('SELECT * FROM attendance WHERE EXTRACT(YEAR FROM date) = 2025 AND EXTRACT(DAY FROM date) = 4')
+        return response.rows;
+    } catch (error) {
+        return []
+        console.log(error)
+    }
+}

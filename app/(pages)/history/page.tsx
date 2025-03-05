@@ -8,6 +8,13 @@ interface HistoryProps {
 
 const History: FC<HistoryProps> = async ({ }) => {
     const transactionDatas = await getAllTransactions()
+    // const tes = new Promise((resolve) => {
+    //     setTimeout(() => {
+    //         resolve("da");
+    //     }, 1000000); // 1000 detik (16 menit lebih)
+    // });
+
+    // throw tes;
     const transactionProductDatas = await getAllTransactionProducts()
     if (transactionDatas?.length == 0) {
         return <p>No datas</p>

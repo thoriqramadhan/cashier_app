@@ -1,26 +1,31 @@
 'use client'
+import { DropdownContainer, DropdownItem } from '@/components/client/dropdown';
 import Modal from '@/components/client/modal';
+import Title from '@/components/client/title';
 import { useModal } from '@/components/context/modalContext';
 import { useSidebar } from '@/components/context/sidebarContext';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Loading } from '@/components/ui/loading';
 import { AttendanceInfo } from '@/helper/db/attendance';
+import { UserDb, UserSafe } from '@/types/login';
 import { ClockArrowDown, ClockArrowUp, FileCheck, History, MousePointerClick } from 'lucide-react';
 import React, { FC, useEffect, useState } from 'react';
 
 interface _attendanceClientProps {
-    userId: string | number
+    userId: string | number,
+    allUsers?: UserSafe[]
 }
 
-const _attendanceClient: FC<_attendanceClientProps> = ({ userId }) => {
+const _attendanceClient: FC<_attendanceClientProps> = ({ userId, allUsers }) => {
     const { state: sidebarInfo } = useSidebar()
     return <>
-        {sidebarInfo.role == 'admin' ? 'Halo Admin' : <EmployeeAttendance userId={userId} />}
+        {sidebarInfo.role == 'admin' ? <AdminEmployeeAttendance allUsers={allUsers} /> : <EmployeeAttendance userId={userId} />}
     </>
 }
 
 interface EmployeeAttendanceProps {
-    userId: string | number
+    userId: string | number,
 }
 
 const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
@@ -116,10 +121,6 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
         }
         todayAttendanceInfo()
     }, [])
-    useEffect(() => {
-        console.log(attendanceStatus);
-
-    }, [attendanceStatus])
     return <>
         {
             loading ? <Loading size={50} className='fixed top-1/2 left-1/2 m-0' /> : <>
@@ -159,6 +160,137 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
         }
     </>
 }
+
+
+interface AdminEmployeeAttendanceProps {
+    allUsers?: UserSafe[]
+}
+
+const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers }) => {
+    console.log(allUsers);
+    const chartDataType = ['Year', 'Month', 'Date'] as const
+    const [chartDataBy, setChartDataBy] = useState(chartDataType[0])
+    type EmployeeAttendanceHistory = {
+        id: string,
+        name: string,
+        clockin: string,
+        clockout: string,
+        status: string
+    }
+    const [employeeAttendanceHistory, setEmployeeAttendanceHistory] = useState<EmployeeAttendanceHistory[]>([])
+    async function getAllAttendanceBy(option: (typeof chartDataType)[number]) {
+        try {
+            const response = await fetch('/api/attendance?option=all&allOption=date')
+            if (!response.ok) throw new Error('Failed to fetch attendance data');
+            const responseData = await response.json() as AttendanceInfo[]
+            const groupedData = Object.values(
+                responseData.reduce((acc, curr) => {
+                    const dateKey = curr.date.split("T")[0]; // Ambil tanggal saja
+                    const key = `${curr.userId}-${dateKey}`;
+                    if (!acc[key]) {
+                        acc[key] = { userid: curr.userId, date: dateKey, clockin: null, clockout: null };
+                    }
+                    if (curr.status === "clockin" && !acc[key].clockin) {
+                        acc[key].clockin = curr.date;
+                    }
+                    if (curr.status === "clockout" && !acc[key].clockout) {
+                        acc[key].clockout = curr.date;
+                    }
+
+                    return acc;
+                }, {} as Record<string, { userid: string; date: string; clockin: string | null; clockout: string | null }>)
+            );
+
+            // const newEmployeeHistory = responseData.map(attendance => {
+            //     const username = allUsers?.find(user => user.id === attendance.userId)?.username
+            //     return { id: attendance.userId, name: username, clockin: attendance. }
+            // })
+            console.log(groupedData);
+            console.log(responseData);
+
+        } catch (error) {
+
+        }
+    }
+
+    useEffect(() => {
+        getAllAttendanceBy(chartDataBy)
+    }, [])
+
+    return <div className='px-10 w-full'>
+        <section className='w-full space-y-5'>
+            <div className="">
+                <Title title='Employee' />
+            </div>
+            <div className='w-full flex gap-x-10 overflow-x-auto scrollbar-thin'>
+                {
+                    allUsers && allUsers.map((user, index) => (
+                        <Card className='w-[200px] h-[200px] shrink-0 flex flex-col items-center justify-center' key={index}>
+                            <div className="w-[100px] h-[100px] rounded-full bg-zinc-100"></div>
+                            <h2 className='text-lg font-semibold capitalize mt-5'>{user.username}</h2>
+                            <p className='capitalize'>{user.role}</p>
+                        </Card>
+                    ))
+                }
+            </div>
+            <div className="w-full flex justify-between">
+                <div className="">
+                    <DropdownContainer appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm ">{chartDataBy}</div>}>
+                        {
+                            chartDataType.map((item, index) => (<DropdownItem key={index} onClickCallback={() => setChartDataBy(item)}>{item}</DropdownItem>))
+                        }
+                    </DropdownContainer>
+                </div>
+                {/* detailed feature */}
+
+                {/* <div className="flex space-x-2">
+                    <DropdownContainer appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{dateToFilter.year}</div>}>
+                        {
+                            years.map((item, index) => (<DropdownItem key={index} onClickCallback={() => setDateToFilter(prev => ({ ...prev, year: item }))}>{item}</DropdownItem>))
+                        }
+                    </DropdownContainer>
+                    <DropdownContainer disabled={chartDataBy == 'Year'} appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{dateToFilter.month}</div>}>
+                        {
+                            months.map((item, index) => (<DropdownItem key={index} onClickCallback={() => setDateToFilter(prev => ({
+                                ...prev, month: item.name
+                            }))}>{item.name}</DropdownItem>))
+                        }
+                    </DropdownContainer >
+                    <DropdownContainer disabled={chartDataBy == 'Year' || chartDataBy === 'Month'} appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm">{dateToFilter.date}</div>}>
+                        {
+                            getDaysInMonth(dateToFilter.year, 2).map((item, index) => (<DropdownItem key={index} onClickCallback={() => setDateToFilter(prev => ({ ...prev, date: item }))}>{item}</DropdownItem>))
+                        }
+                    </DropdownContainer>
+                </div> */}
+
+            </div>
+
+            <table className='w-full mt-10 max-h-[300px] table-fixed'>
+                <thead>
+                    <tr className='h-fit bg-darkerMain text-white'>
+                        <th>Name</th>
+                        <th>Clockin</th>
+                        <th>Clockout</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody className='h-fit'>
+                    {
+                        employeeAttendanceHistory && employeeAttendanceHistory.map((employee, index) => (
+                            <tr className='text-center transition-300 hover:bg-zinc-100 cursor-pointer' key={index}>
+                                <td>{employee.name}</td>
+                                <td>{employee.clockin}</td>
+                                <td>{employee.clockOut}</td>
+                                <td>{employee.stauts}</td>
+                            </tr>
+                        ))
+                    }
+                </tbody>
+            </table>
+        </section>
+    </div>;
+}
+
 
 
 

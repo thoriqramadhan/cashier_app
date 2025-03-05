@@ -1,4 +1,4 @@
-import { AddAttendance, getTodaysAttendanceInfo } from "@/helper/db/attendance"
+import { AddAttendance, getAllAttendanceBy, getTodaysAttendanceInfo } from "@/helper/db/attendance"
 import { getAuthInfo } from "@/lib/auth/jwt"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -25,6 +25,12 @@ export async function GET(req: NextRequest) {
             if(!userId) throw new Error('You need to insert userId') 
             const response = await getTodaysAttendanceInfo(userId)
             return NextResponse.json(response , {status: 200})
+        }
+        if (option === 'all') {
+            const allOption = searchParams.get('allOption')
+            if (!allOption) throw new Error("You need insert allOption ('date' || 'month' || 'year')")
+            const response = await getAllAttendanceBy('date', 'dada')
+            return NextResponse.json(response , {status:200})
         }
     } catch (error) {
         console.log(error)

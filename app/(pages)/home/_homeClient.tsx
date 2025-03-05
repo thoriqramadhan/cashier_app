@@ -113,7 +113,7 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
                             </div>
                         </div>
                         <div className="p-3 flex-1 flex flex-col">
-                            <h2 className='text-xl capitalize w-full relative'>{product.name} <span className='text-xs absolute right-0 px-2 py-1 bg-green-300 rounded-full'>{product.stock}</span></h2>
+                            <h2 className='text-xl capitalize w-full relative'>{product.name} <span className='text-xs absolute right-0 px-2 py-1 bg-green-300 rounded-full'>{product.stock == 0 ? 'Out of order' : product.stock}</span></h2>
                             <h2 className='text-lg text-slate-600'>{formatToIDR(Number(product.price))}</h2>
                             <Button className='w-full mt-auto' onClick={() => addProductToCart({ id: product.id, name: product.name, price: Number(product.price), qty: 1, totalPrice: Number(product.price) })}>Add</Button>
                         </div>
