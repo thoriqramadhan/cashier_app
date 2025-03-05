@@ -72,6 +72,8 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
                 tax,
                 total
             })
+        } else {
+            setPrices({ subtotal: 0, tax: 0, total: 0 })
         }
     }, [selectedProducts])
     // refilter products arr when search is changed
@@ -148,7 +150,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
     const { setter: setSidebar } = useSidebar()
 
     async function handlePayment() {
-        if (customerName.length < 3) return;
+        if (customerName.length < 3 || selectedProduct.state.length == 0) return;
         try {
             const paymentResponse = await fetch('/api/payment', {
                 method: 'POST',
@@ -167,7 +169,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
     }
     async function handlePostponePayment() {
         try {
-            if (customerName.length === 0) return;
+            if (customerName.length < 3 || selectedProduct.state.length == 0) return;
             // get transaction & transactionDetail
             setLoading(true)
             const transactionStorage = JSON.parse(localStorage.getItem('transaction')) ?? [];
@@ -248,8 +250,8 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
                 <p className='font-bold'>{formatToIDR(prices.total)}</p>
             </div>
             <div className="flex gap-x-2 mt-2">
-                <Button className='flex-1' onClick={() => handlePostponePayment()} disabled={loading}>Later</Button>
-                <Button className='flex-1' onClick={() => handlePayment()} disabled={loading}>Pay</Button>
+                <Button className='flex-1' onClick={() => handlePostponePayment()} disabled={loading || customerName.length < 3 || selectedProduct.state.length == 0}>Later</Button>
+                <Button className='flex-1' onClick={() => handlePayment()} disabled={loading || customerName.length < 3 || selectedProduct.state.length == 0}>Pay</Button>
             </div>
         </div>
     </div>;
@@ -278,6 +280,10 @@ export const CartCard: FC<CartCardProps> = ({ productData }) => {
             qty: option == 'plus' ? prev.qty + 1 : prev.qty - 1
         }))
     }
+    function handleDeleteFromCard() {
+        const newCart = state.filter(cart => cart.id != productData.id)
+        setter(newCart)
+    }
     useEffect(() => {
         const newSelectedArr = state.map(item => {
             if (item.id == productData.id) {
@@ -301,7 +307,7 @@ export const CartCard: FC<CartCardProps> = ({ productData }) => {
             <input type="text" name="quantity" id="quantity" className='min-w-[20px] max-w-[24px] text-center focus:ring-0 focus:outline-none ' value={cartData.qty} onChange={(e) => setCartData(prev => ({ ...prev, qty: Number(e.target.value), totalPrice: prev.price * Number(e.target.value) }))} />
             <Button className='px-2 py-1 h-fit' onClick={() => handleChangeQty('minus')}>-</Button>
         </div>
-        <Trash2 size={15} className='absolute top-2 right-2' />
+        <Trash2 size={15} className='absolute top-2 right-2 cursor-pointer' onClick={() => handleDeleteFromCard()} />
     </div>
 }
 
