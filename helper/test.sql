@@ -1,1 +1,1 @@
-INSERT INTO transaction (ordered_date , transaction_date , transaction_status , total_price) VALUES ()
+INSERT INTO attendance(userId , date , status) VALUES ($1 , $2 , $3);

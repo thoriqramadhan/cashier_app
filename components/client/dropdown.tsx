@@ -31,22 +31,26 @@ export const DropdownSettings: FC<DropdownSettingsProps> = ({ children, classNam
 interface DropdownContainerProps {
     appereance: React.ReactElement<HTMLAttributes<HTMLDivElement>>,
     children: React.ReactNode,
+    disabled?: boolean,
     itemStyle?: 'full' | 'default',
     className?: string
 }
 
-export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children, className, itemStyle = 'default' }) => {
+export const DropdownContainer: FC<DropdownContainerProps> = ({ appereance, children, className, itemStyle = 'default', disabled = false }) => {
     const [isOpen, setIsOpen] = useState(false)
     function handleDropdown() {
         setIsOpen(prev => !prev)
     }
     return <span className={cn('flex items-center relative flex-col', className)}>
-        {React.cloneElement(appereance, { onClick: () => handleDropdown() })}
-        <div className={`${itemStyle == 'full' ? 'w-full' : 'w-[100px]'} ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10 right-0 rounded-sm border z-[100]`}>
-            <DropdownContainerContext.Provider value={{ isOpen, handleDropdown }}>
-                {children}
-            </DropdownContainerContext.Provider>
-        </div>
+        {disabled ? React.cloneElement(appereance, { className: cn(appereance.props.className, 'bg-zinc-100 cursor-not-allowed') }) : React.cloneElement(appereance, { onClick: () => handleDropdown() })}
+        {
+            !disabled &&
+            <div className={`${itemStyle == 'full' ? 'w-full' : 'w-[100px]'} ${!isOpen && 'hidden'} overflow-y-auto bg-white absolute top-10  right-0 rounded-sm border z-[100] max-h-[200px] scrollbar-thin`}>
+                <DropdownContainerContext.Provider value={{ isOpen, handleDropdown }}>
+                    {children}
+                </DropdownContainerContext.Provider>
+            </div>
+        }
     </span>
 }
 

@@ -19,3 +19,9 @@ export interface TransactionProductData {
 export interface transactionGetMethodRequest{
     option: 'lastId' | 'all'
 }
+
+export interface TransactionRecap {
+    month: string,
+    total_transaction: string,
+    total_income: string
+}
