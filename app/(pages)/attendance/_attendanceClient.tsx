@@ -6,9 +6,11 @@ import { useModal } from '@/components/context/modalContext';
 import { useSidebar } from '@/components/context/sidebarContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Loading } from '@/components/ui/loading';
 import { AttendanceInfo } from '@/helper/db/attendance';
-import { UserDb, UserSafe } from '@/types/login';
+import Flatpickr from 'react-flatpickr'
+import "flatpickr/dist/flatpickr.min.css";
 import { ClockArrowDown, ClockArrowUp, FileCheck, History, MousePointerClick } from 'lucide-react';
 import React, { FC, useEffect, useState } from 'react';
 
@@ -29,10 +31,13 @@ interface EmployeeAttendanceProps {
 }
 
 const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
+    // general state
     const { modalState, modalSetter } = useModal()
-    const [employeeStatus, setEmployeeStatus] = useState<'clockin' | 'clockout' | 'finished'>('clockin')
     const [loading, setLoading] = useState(true)
+    const [attendnaceType, setAttendnaceType] = useState<'Attendance' | 'Permission'>('Permission')
     const iconSize = 40;
+    // attendance state
+    const [employeeStatus, setEmployeeStatus] = useState<'clockin' | 'clockout' | 'finished'>('clockin')
     const isFinished = employeeStatus == 'finished'
     const attendanceStatusInit = [
         {
@@ -53,6 +58,9 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
 
     ]
     const [attendanceStatus, setAttendanceStatus] = useState(attendanceStatusInit)
+
+    // permission state
+    const [dateToLeave, setDateToLeave] = useState<Date | null>(null)
     async function handleAttendance(option: 'clockin' | 'clockout') {
         try {
             const response = await fetch(`/api/attendance?option=${option}`, {
@@ -119,34 +127,74 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                 console.log(error);
             }
         }
+        if (attendnaceType == 'Permission') {
+            setLoading(false)
+            return
+        }
         todayAttendanceInfo()
     }, [])
+    useEffect(() => {
+        if (dateToLeave) {
+            console.log(dateToLeave);
+        }
+
+    }, [dateToLeave])
     return <>
         {
             loading ? <Loading size={50} className='fixed top-1/2 left-1/2 m-0' /> : <>
-                <div className={`w-[200px] h-[200px]  border-[4px] rounded-2xl flex flex-col items-center justify-center bg-gradient-to-b ${employeeStatus === 'clockin' || employeeStatus === 'finished' ? 'from-[rgba(220,252,231,0.3)] to-[rgba(134,239,172,1)]' : 'from-white to-black'} shadow-md cursor-pointer`} onClick={() => modalSetter('state', !modalState.isOpen)}>
-                    {isFinished ? <FileCheck size={80} color='white' /> :
-                        <MousePointerClick size={80} color='white' />
-                    }
-                    <p className='text-white font-semibold text-lg mt-2'>{employeeStatus === 'clockin' ? 'Clock In' : isFinished ? 'Finished' : 'Clock Out'}</p>
+                <div className="w-full flex justify-start px-10 ">
+                    <DropdownContainer appereance={<div className="w-fit h-full flex items-center px-5 cursor-pointer border py-1 rounded-sm ">{attendnaceType}</div>}>
+                        <DropdownItem onClickCallback={() => setAttendnaceType('Attendance')}>Attendance</DropdownItem>
+                        <DropdownItem onClickCallback={() => setAttendnaceType('Permission')}>Permission</DropdownItem>
+                    </DropdownContainer>
                 </div>
-                <div className="flex gap-x-12">
-                    {
-                        attendanceStatus?.length > 0 && attendanceStatus.map((item, index) => {
-                            console.log(item);
+                {
+                    attendnaceType == 'Attendance' ?
+                        <>
+                            <div className={`w-[200px] h-[200px]  border-[4px] rounded-2xl flex flex-col items-center justify-center bg-gradient-to-b ${employeeStatus === 'clockin' || employeeStatus === 'finished' ? 'from-[rgba(220,252,231,0.3)] to-[rgba(134,239,172,1)]' : 'from-white to-black'} shadow-md cursor-pointer`} onClick={() => modalSetter('state', !modalState.isOpen)}>
+                                {isFinished ? <FileCheck size={80} color='white' /> :
+                                    <MousePointerClick size={80} color='white' />
+                                }
+                                <p className='text-white font-semibold text-lg mt-2'>{employeeStatus === 'clockin' ? 'Clock In' : isFinished ? 'Finished' : 'Clock Out'}</p>
+                            </div>
+                            <div className="flex gap-x-12">
+                                {
+                                    attendanceStatus?.length > 0 && attendanceStatus.map((item, index) => {
+                                        console.log(item);
 
-                            return (
-                                <div className="text-center flex flex-col items-center justify-center space-y-1" key={index}>
-                                    {
-                                        React.cloneElement(item.icon, { size: iconSize, className: 'text-darkerMain' })
-                                    }
-                                    <p className='text-md font-semibold'>{item.value ? item.value : '--:--'}</p>
-                                    <p className='text-sm text-gray-500'>{item.title}</p>
-                                </div>
-                            )
-                        })
-                    }
-                </div>
+                                        return (
+                                            <div className="text-center flex flex-col items-center justify-center space-y-1" key={index}>
+                                                {
+                                                    React.cloneElement(item.icon, { size: iconSize, className: 'text-darkerMain' })
+                                                }
+                                                <p className='text-md font-semibold'>{item.value ? item.value : '--:--'}</p>
+                                                <p className='text-sm text-gray-500'>{item.title}</p>
+                                            </div>
+                                        )
+                                    })
+                                }
+                            </div>
+                        </>
+                        :
+                        <>
+                            <form action="">
+                                <Title title='Apply For Leave' />
+                                <section className='flex flex-col'>
+                                    <Label htmlFor='date_range'>Choose Date</Label>
+                                    <Flatpickr options={{ mode: 'range' }} className='border rounded-md px-2 py-1' onValueUpdate={(dates) => {
+                                        if (dates.length === 2) setDateToLeave(dates);
+                                    }} />
+                                </section>
+                                <section className='flex flex-col'>
+                                    <Label htmlFor='date_range'>Choose Leave Type</Label>
+                                </section>
+                                <section className='flex flex-col'>
+                                    <Label htmlFor='date_range'>Leave Reason</Label>
+                                    <textarea name="" id="" className='resize-none'></textarea>
+                                </section>
+                            </form>
+                        </>
+                }
             </>
         }
         {employeeStatus != 'finished' &&
