@@ -38,3 +38,21 @@ export async function getAllAttendanceBy(option: 'date' | 'month' | 'year' , val
         console.log(error)
     }
 }
+
+export async function addLeaveType(value: string) {
+    try {
+        await query('INSERT INTO attendance_type(name) VALUES($1)', [value.toLowerCase()])
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export async function getAllLeaveTypes() : Promise<{name: string}[]> {
+    try {
+        const response = await query('SELECT * FROM attendance_type')
+        return response.rows
+    } catch (error) {
+        console.log(error)
+        return []
+    }
+}

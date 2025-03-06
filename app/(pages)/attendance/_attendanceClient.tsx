@@ -1,5 +1,5 @@
 'use client'
-import { DropdownContainer, DropdownItem } from '@/components/client/dropdown';
+import { DropdownContainer, DropdownItem, DropdownSettings } from '@/components/client/dropdown';
 import Modal from '@/components/client/modal';
 import Title from '@/components/client/title';
 import { useModal } from '@/components/context/modalContext';
@@ -11,9 +11,12 @@ import { Loading } from '@/components/ui/loading';
 import { AttendanceInfo } from '@/helper/db/attendance';
 import Flatpickr from 'react-flatpickr'
 import "flatpickr/dist/flatpickr.min.css";
-import { ClockArrowDown, ClockArrowUp, FileCheck, History, MousePointerClick } from 'lucide-react';
+import TextareaAutosize from 'react-textarea-autosize'
+import { Ban, ClockArrowDown, ClockArrowUp, FileCheck, History, MousePointerClick } from 'lucide-react';
 import React, { FC, useEffect, useState } from 'react';
 import { UserSafe } from '@/types/login';
+import { Input } from '@/components/ui/input';
+import TableSkeleton from '@/components/skeleton/TableSkeleton';
 
 interface _attendanceClientProps {
     userId: string | number,
@@ -35,7 +38,7 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
     // general state
     const { modalState, modalSetter } = useModal()
     const [loading, setLoading] = useState(true)
-    const [attendnaceType, setAttendnaceType] = useState<'Attendance' | 'Permission'>('Permission')
+    const [attendnaceType, setAttendnaceType] = useState<'Attendance' | 'Permission'>('Attendance')
     const iconSize = 40;
     // attendance state
     const [employeeStatus, setEmployeeStatus] = useState<'clockin' | 'clockout' | 'finished'>('clockin')
@@ -62,6 +65,11 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
 
     // permission state
     const [dateToLeave, setDateToLeave] = useState<Date | null>(null)
+    const permissionInfoInit = {
+        leaveType: '',
+        leaveReason: '',
+    }
+    const [permissionInfo, setPermissionInfo] = useState(permissionInfoInit)
     async function handleAttendance(option: 'clockin' | 'clockout') {
         try {
             const response = await fetch(`/api/attendance?option=${option}`, {
@@ -178,7 +186,7 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                         </>
                         :
                         <>
-                            <form action="">
+                            <form action="" className='p-5 border rounded-md bg-white min-w-[300px] h-fit shadow-sm space-y-5 *:space-y-3'>
                                 <Title title='Apply For Leave' />
                                 <section className='flex flex-col'>
                                     <Label htmlFor='date_range'>Choose Date</Label>
@@ -188,10 +196,13 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                                 </section>
                                 <section className='flex flex-col'>
                                     <Label htmlFor='date_range'>Choose Leave Type</Label>
+                                    <DropdownContainer itemStyle='full' appereance={<div className='w-full h-8 border rounded-sm py-1 px-2'></div>}>
+                                        <DropdownItem >test</DropdownItem>
+                                    </DropdownContainer>
                                 </section>
                                 <section className='flex flex-col'>
                                     <Label htmlFor='date_range'>Leave Reason</Label>
-                                    <textarea name="" id="" className='resize-none'></textarea>
+                                    <TextareaAutosize className='resize-none border px-3 py-2 rounded-md' />
                                 </section>
                             </form>
                         </>
@@ -216,9 +227,6 @@ interface AdminEmployeeAttendanceProps {
 }
 
 const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers }) => {
-    console.log(allUsers);
-    const chartDataType = ['Year', 'Month', 'Date'] as const
-    const [chartDataBy, setChartDataBy] = useState(chartDataType[0])
     type EmployeeAttendanceHistory = {
         id: string,
         name: string,
@@ -226,6 +234,14 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         clockout: string,
         status: string
     }
+    // general
+    const [loading, setLoading] = useState({
+        leave: false
+    })
+    const { modalState, modalSetter } = useModal()
+    const chartDataType = ['Year', 'Month', 'Date'] as const
+    const [chartDataBy, setChartDataBy] = useState(chartDataType[0])
+    // history
     const [employeeAttendanceHistory, setEmployeeAttendanceHistory] = useState<EmployeeAttendanceHistory[]>([])
     async function getAllAttendanceBy(option: (typeof chartDataType)[number]) {
         try {
@@ -261,12 +277,53 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
 
         }
     }
+    // leave type
+    const [leaveState, setLeaveState] = useState({
+        state: '',
+        error: ''
+    })
+    const [leaveArrays, setLeaveArrays] = useState<{ name: string }[]>([])
+    async function addLeaveType() {
+        try {
+            if (leaveState.state.length <= 0) throw new Error('Empty value')
+            const response = await fetch('/api/attendance/type', {
+                method: 'POST',
+                body: JSON.stringify({ name: leaveState.state })
+            })
+            if (!response.ok) throw new Error(response.statusText)
+            setLeaveArrays(prev => ([...prev, { name: leaveState.state }]))
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLeaveState(prev => ({ ...prev, state: '' }))
+            modalSetter('state', !modalState.isOpen)
+        }
+    }
+    async function getAllLeaveTypes() {
+        try {
+            const response = await fetch('/api/attendance/type')
+            setLoading(prev => ({ ...prev, leave: true }))
+            if (!response.ok) throw new Error(response.statusText)
+            const responseData = await response.json()
+            setLeaveArrays(responseData)
+        } catch (error) {
+            console.log(error);
+        } finally {
+            setLoading(prev => ({ ...prev, leave: false }))
+        }
+    }
 
+    // effects
     useEffect(() => {
         getAllAttendanceBy(chartDataBy)
+        getAllLeaveTypes()
     }, [])
+    useEffect(() => {
+        console.log(leaveArrays);
 
-    return <div className='px-10 w-full'>
+    }, [leaveArrays])
+
+    return <div className='px-10 w-full space-y-20 pb-20'>
         <section className='w-full space-y-5'>
             <div className="">
                 <Title title='Employee' />
@@ -337,6 +394,41 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
                 </tbody>
             </table>
         </section>
+        <section className="w-full space-y-5 ">
+            <div className=' p-5 bg-zinc-100 space-y-5 min-h-[50%] max-h-[80%] overflow-y-auto shadow-sm border rounded-sm'>
+                <h1 className='text-slate-400 font-light tracking-wider text-lg'>Add or edit leave type.</h1>
+                {loading.leave ? <TableSkeleton /> : leaveArrays.map((item, index) => (
+                    <div key={index} className="w-full h-10 bg-white border-slate-300 border-[2px] rounded-md flex *:gap-x-3 items-center px-5 justify-between">
+                        <span className='flex items-center'>
+                            <Ban />
+                            <p className='font-semibold text-slate-500 capitalize'>{item.name}</p>
+                        </span>
+                        <DropdownSettings >
+                            <DropdownItem>
+                                Edit
+                            </DropdownItem>
+                            <DropdownItem >
+                                Delete
+                            </DropdownItem>
+                        </DropdownSettings>
+                    </div>
+                ))}
+
+                <Button className='w-full' onClick={() => modalSetter('state', !modalState.isOpen)}>Create New </Button>
+            </div>
+        </section>
+        <Modal>
+            <div className='space-y-3'>
+                <Label htmlFor='leave_name' >
+                    Leave Type
+                </Label>
+                <Input type='text' name='leave_name' placeholder='Leave name..' autoComplete='off' value={leaveState.state} onChange={(e) => setLeaveState(prev => ({ ...prev, state: e.target.value }))} />
+                {/* {
+                    message.error.category && <ErrorText className="self-start">{message.error.category}</ErrorText>
+                } */}
+                <Button className='w-full' onClick={() => addLeaveType()}>Create</Button>
+            </div>
+        </Modal>
     </div>;
 }
 
