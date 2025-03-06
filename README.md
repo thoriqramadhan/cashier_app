@@ -1,3 +1,31 @@
+## CashierApp
+
+is an web application made for managing restaurant. the feature is divided by 2 major role admin & cashier.
+
+### Admin
+
+<ol>
+  <li>Managing products (stock , price , category)</li>
+  <li>Product category</li>
+  <li>Manage employee accounts</li>
+  <li>Income recap ( year , month , week)</li>
+  <li>Products tax control</li>
+  <li>Monitoring employees attendance</li>
+  <li>Manage employee absence permits </li>
+</ol>
+
+### Cashier
+
+<ol>
+  <li>Auto calculate customers orders</li>
+  <li>List of pospone transaction</li>
+  <li>List of successfull transaction </li>
+  <li>Attendance system</li>
+  <li>Attendance Leave Applicant</li>
+</ol>
+
+## Next Template
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
