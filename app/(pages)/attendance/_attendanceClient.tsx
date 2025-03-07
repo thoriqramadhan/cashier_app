@@ -17,6 +17,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { UserSafe } from '@/types/login';
 import { Input } from '@/components/ui/input';
 import TableSkeleton from '@/components/skeleton/TableSkeleton';
+import { ErrorText } from '@/components/text';
 
 interface _attendanceClientProps {
     userId: string | number,
@@ -261,10 +262,12 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         leave: false
     })
     const { modalState, modalSetter } = useModal()
+    const [modalType, setModalType] = useState<'create' | 'edit'>('create')
     const chartDataType = ['Year', 'Month', 'Date'] as const
     const [chartDataBy, setChartDataBy] = useState(chartDataType[0])
     // history
     const [employeeAttendanceHistory, setEmployeeAttendanceHistory] = useState<EmployeeAttendanceHistory[]>([])
+    // WIP -------------------------------
     async function getAllAttendanceBy(option: (typeof chartDataType)[number]) {
         try {
             const response = await fetch('/api/attendance?option=all&allOption=date')
@@ -304,6 +307,8 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         state: '',
         error: ''
     })
+    const [oldEditState, setOldEditState] = useState('')
+
     const [leaveArrays, setLeaveArrays] = useState<{ name: string }[]>([])
     async function addLeaveType() {
         try {
@@ -323,8 +328,8 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
     }
     async function getAllLeaveTypes() {
         try {
-            const response = await fetch('/api/attendance/type')
             setLoading(prev => ({ ...prev, leave: true }))
+            const response = await fetch('/api/attendance/type')
             if (!response.ok) throw new Error(response.statusText)
             const responseData = await response.json()
             setLeaveArrays(responseData)
@@ -333,6 +338,58 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         } finally {
             setLoading(prev => ({ ...prev, leave: false }))
         }
+    }
+    async function deleteLeaveType(name: string) {
+        try {
+            const response = await fetch('/api/attendance/type', {
+                method: 'DELETE',
+                body: JSON.stringify({ name })
+            })
+            if (!response.ok) throw new Error(response.statusText)
+            const responseData = await response.json()
+            const newLeaveArrays = leaveArrays.filter(item => item.name !== name)
+            setLeaveArrays(newLeaveArrays)
+        } catch (error) {
+            console.log(error);
+
+        }
+    }
+    async function editLeaveType() {
+        if (oldEditState == leaveState.state) {
+            setLeaveState(prev => ({ ...prev, error: 'Leave type must be different' }))
+            return;
+        }
+        try {
+            const response = await fetch('/api/attendance/type', {
+                method: 'PATCH',
+                body: JSON.stringify({ oldState: oldEditState, newState: leaveState.state })
+            })
+            let responseData;
+            try {
+                responseData = await response.json();// Coba parse JSON
+            } catch {
+                responseData = { message: response.statusText }; // Jika gagal, fallback ke statusText
+            }
+            if (!response.ok) throw new Error(responseData.message || response.statusText)
+            const newLeaveTypeArrays = leaveArrays.map(item => {
+                if (item.name == oldEditState) {
+                    return { name: leaveState.state }
+                }
+                return item
+            })
+            setLeaveArrays(newLeaveTypeArrays)
+            setOldEditState('')
+            modalSetter('state', !modalState)
+        } catch (error) {
+            setLeaveState(prev => ({ ...prev, error: error.message }))
+            console.log(error.message);
+        }
+
+    }
+
+    function modalHandler(value: 'create' | 'edit') {
+        setModalType(value)
+        modalSetter('state', !modalState.isOpen)
     }
 
     // effects
@@ -417,38 +474,54 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
             </table>
         </section>
         <section className="w-full space-y-5 ">
-            <div className=' p-5 bg-zinc-100 space-y-5 min-h-[50%] max-h-[80%] overflow-y-auto shadow-sm border rounded-sm'>
-                <h1 className='text-slate-400 font-light tracking-wider text-lg'>Add or edit leave type.</h1>
-                {loading.leave ? <TableSkeleton /> : leaveArrays.map((item, index) => (
-                    <div key={index} className="w-full h-10 bg-white border-slate-300 border-[2px] rounded-md flex *:gap-x-3 items-center px-5 justify-between">
-                        <span className='flex items-center'>
-                            <Ban />
-                            <p className='font-semibold text-slate-500 capitalize'>{item.name}</p>
-                        </span>
-                        <DropdownSettings >
-                            <DropdownItem>
-                                Edit
-                            </DropdownItem>
-                            <DropdownItem >
-                                Delete
-                            </DropdownItem>
-                        </DropdownSettings>
-                    </div>
-                ))}
+            {
+                loading.leave ? <TableSkeleton /> :
+                    <div className=' p-5 bg-zinc-100 space-y-5 min-h-[50%] max-h-[80%] overflow-y-auto shadow-sm border rounded-sm'>
+                        <h1 className='text-slate-400 font-light tracking-wider text-lg'>Add or edit leave type.</h1>
+                        {leaveArrays.map((item, index) => (
+                            <div key={index} className="w-full h-10 bg-white border-slate-300 border-[2px] rounded-md flex *:gap-x-3 items-center px-5 justify-between">
+                                <span className='flex items-center'>
+                                    <Ban />
+                                    <p className='font-semibold text-slate-500 capitalize'>{item.name}</p>
+                                </span>
+                                <DropdownSettings >
+                                    <DropdownItem onClickCallback={() => {
+                                        setOldEditState(item.name)
+                                        setLeaveState({
+                                            error: '',
+                                            state: item.name
+                                        })
+                                        modalHandler('edit')
+                                    }}>
+                                        Edit
+                                    </DropdownItem>
+                                    <DropdownItem onClickCallback={() => deleteLeaveType(item.name)}>
+                                        Delete
+                                    </DropdownItem>
+                                </DropdownSettings>
+                            </div>
+                        ))}
 
-                <Button className='w-full' onClick={() => modalSetter('state', !modalState.isOpen)}>Create New </Button>
-            </div>
+                        <Button className='w-full' onClick={() => modalHandler('create')}>Create New </Button>
+                    </div>
+            }
         </section>
         <Modal>
             <div className='space-y-3'>
                 <Label htmlFor='leave_name' >
-                    Leave Type
+                    {modalType === 'edit' && 'Edit'} Leave Type
                 </Label>
                 <Input type='text' name='leave_name' placeholder='Leave name..' autoComplete='off' value={leaveState.state} onChange={(e) => setLeaveState(prev => ({ ...prev, state: e.target.value }))} />
-                {/* {
-                    message.error.category && <ErrorText className="self-start">{message.error.category}</ErrorText>
-                } */}
-                <Button className='w-full' onClick={() => addLeaveType()}>Create</Button>
+                {
+                    leaveState.error && <ErrorText className="self-start">{leaveState.error}</ErrorText>
+                }
+                <Button className='w-full' onClick={() => {
+                    if (modalType === 'create') {
+                        addLeaveType()
+                    } else {
+                        editLeaveType()
+                    }
+                }}>{modalType === 'create' ? 'Create' : 'Edit'}</Button>
             </div>
         </Modal>
     </div>;

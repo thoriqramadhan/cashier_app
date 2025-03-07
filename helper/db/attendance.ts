@@ -56,3 +56,20 @@ export async function getAllLeaveTypes() : Promise<{name: string}[]> {
         return []
     }
 }
+
+export async function deleteLeaveType(name: string) {
+    try {
+        await query('DELETE FROM attendance_type WHERE name = $1', [name])
+        return {status: 200}
+    } catch (error) {
+        return {status: 400 , statusText: error}
+        
+    }
+}
+export async function updateLeaveType(oldVal: string, newVal: string) {
+    try {
+        await query('UPDATE attendance_type SET name = $1 WHERE name = $2' , [newVal.toLowerCase() , oldVal])
+    } catch (error) {
+        console.log(error);
+    }
+}
