@@ -65,6 +65,7 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
 
     // permission state
     const [dateToLeave, setDateToLeave] = useState<Date | null>(null)
+    const [leaveTypes, setLeaveTypes] = useState<{ name: string }[]>([])
     const permissionInfoInit = {
         leaveType: '',
         leaveReason: '',
@@ -92,14 +93,20 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
     useEffect(() => {
         const todayAttendanceInfo = async () => {
             try {
+                // fetch today attendance info by userID and date
                 const response = await fetch(`/api/attendance?option=userId&userId=${userId}`)
                 if (!response.ok) throw new Error(response.statusText)
                 const responseData = await response.json() as AttendanceInfo[]
+                // find data with status clockin
                 const isAlreadyClockIn = responseData.find(attendance => attendance.status === 'clockin')
+                // if faund set to clockout
                 if (isAlreadyClockIn) setEmployeeStatus('clockout')
+                // find data with status clockout
                 const isAlreadyClockOut = responseData.find(attendance => attendance.status === 'clockout')
+                // if faund set to finished
                 if (isAlreadyClockOut) setEmployeeStatus('finished')
                 let workingTime = null;
+                // if both found get total working time
                 if (isAlreadyClockIn && isAlreadyClockOut) {
                     const clockInTime = new Date(isAlreadyClockIn.date).getTime();
                     const clockOutTime = new Date(isAlreadyClockOut.date).getTime();
@@ -110,8 +117,7 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                     const seconds = Math.floor((diffMs % (1000 * 60)) / 1000); // Sisa detik
                     workingTime = `${hours}h ${minutes}m ${seconds}s`;
                 }
-                console.log(isAlreadyClockOut?.date, isAlreadyClockIn);
-
+                // set status by index and available data
                 setAttendanceStatus(prev => prev.map((attendance, index) => {
                     if (index == 0 && isAlreadyClockIn) return {
                         ...attendance, value: new Date(isAlreadyClockIn.date).toLocaleString('en-US', {
@@ -136,11 +142,23 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                 console.log(error);
             }
         }
+        const getLeaveTypes = async () => {
+            try {
+                const response = await fetch('/api/attendance/type')
+                if (!response.ok) throw new Error(response.statusText)
+                const responseData = await response.json() as { name: string }[]
+                setLeaveTypes(responseData)
+                setPermissionInfo(prev => ({ ...prev, leaveType: responseData[0].name }))
+            } catch (error) {
+                console.log(error);
+            }
+        }
         if (attendnaceType == 'Permission') {
             setLoading(false)
             return
         }
         todayAttendanceInfo()
+        getLeaveTypes()
     }, [])
     useEffect(() => {
         if (dateToLeave) {
@@ -196,8 +214,12 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                                 </section>
                                 <section className='flex flex-col'>
                                     <Label htmlFor='date_range'>Choose Leave Type</Label>
-                                    <DropdownContainer itemStyle='full' appereance={<div className='w-full h-8 border rounded-sm py-1 px-2'></div>}>
-                                        <DropdownItem >test</DropdownItem>
+                                    <DropdownContainer itemStyle='full' appereance={<div className='w-full h-8 border rounded-sm py-1 px-2'>{permissionInfo.leaveType}</div>}>
+                                        {
+                                            leaveTypes.length > 0 && leaveTypes.map((item, index) => (
+                                                <DropdownItem key={index} onClickCallback={() => setPermissionInfo(prev => ({ ...prev, leaveType: item.name }))}>{item.name}</DropdownItem>
+                                            ))
+                                        }
                                     </DropdownContainer>
                                 </section>
                                 <section className='flex flex-col'>
