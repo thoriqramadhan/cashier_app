@@ -39,7 +39,7 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
     // general state
     const { modalState, modalSetter } = useModal()
     const [loading, setLoading] = useState(true)
-    const [attendnaceType, setAttendnaceType] = useState<'Attendance' | 'Permission'>('Attendance')
+    const [attendnaceType, setAttendnaceType] = useState<'Attendance' | 'Permission'>('Permission')
     const iconSize = 40;
     // attendance state
     const [employeeStatus, setEmployeeStatus] = useState<'clockin' | 'clockout' | 'finished'>('clockin')
@@ -65,8 +65,14 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
     const [attendanceStatus, setAttendanceStatus] = useState(attendanceStatusInit)
 
     // permission state
-    const [dateToLeave, setDateToLeave] = useState<Date | null>(null)
+    const [dateToLeave, setDateToLeave] = useState<Date[] | null>(null)
     const [leaveTypes, setLeaveTypes] = useState<{ name: string }[]>([])
+    const permissionErrorsInit = {
+        date: '',
+        leaveType: '',
+        reason: ''
+    }
+    const [permissionErrors, setPermissionErrors] = useState(permissionErrorsInit)
     const permissionInfoInit = {
         leaveType: '',
         leaveReason: '',
@@ -89,6 +95,41 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
             }
         } catch (error) {
             console.log(error);
+        }
+    }
+    async function handleLeaveApplicant() {
+        try {
+            const newDateToleave = dateToLeave.map(item => new Date(item).toISOString())
+            if (newDateToleave.length > 2 || permissionInfo.leaveReason.length === 0 || permissionInfo.leaveReason.length === 0) {
+                console.log('data harus di isi');
+                return
+            }
+            const clientData = {
+                user_id: userId,
+                leave_category: permissionInfo.leaveType,
+                reason: permissionInfo.leaveReason,
+                leave_at: newDateToleave[0],
+                back_at: newDateToleave[1]
+            }
+            const response = await fetch('/api/attendance/leave', {
+                method: 'POST',
+                body: JSON.stringify({ clientData })
+            })
+            let responseData;
+            try {
+                responseData = await response.json();
+            } catch {
+                responseData = { message: response.statusText };
+            }
+            if (!response.ok) throw new Error(responseData)
+            setPermissionInfo({
+                leaveReason: '',
+                leaveType: leaveTypes[0].name
+            })
+            setDateToLeave(null)
+        } catch (error) {
+            console.log(error.message);
+
         }
     }
     useEffect(() => {
@@ -154,19 +195,9 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                 console.log(error);
             }
         }
-        if (attendnaceType == 'Permission') {
-            setLoading(false)
-            return
-        }
         todayAttendanceInfo()
         getLeaveTypes()
     }, [])
-    useEffect(() => {
-        if (dateToLeave) {
-            console.log(dateToLeave);
-        }
-
-    }, [dateToLeave])
     return <>
         {
             loading ? <Loading size={50} className='fixed top-1/2 left-1/2 m-0' /> : <>
@@ -204,30 +235,44 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                             </div>
                         </>
                         :
+                        // UI leave applicant
                         <>
-                            <form action="" className='p-5 border rounded-md bg-white min-w-[300px] h-fit shadow-sm space-y-5 *:space-y-3'>
-                                <Title title='Apply For Leave' />
+                            <article className='p-5 border rounded-md bg-white min-w-[300px] h-fit shadow-sm space-y-5 *:space-y-3'>
+                                <Title title='Apply For Leave' desc='Setiap user hanya dapat mengirimkan izin 1x/hari' />
+                                {/* pilih tanggal */}
                                 <section className='flex flex-col'>
                                     <Label htmlFor='date_range'>Choose Date</Label>
                                     <Flatpickr options={{ mode: 'range' }} className='border rounded-md px-2 py-1' onValueUpdate={(dates) => {
                                         if (dates.length === 2) setDateToLeave(dates);
                                     }} />
+                                    {
+                                        permissionErrors.date && <ErrorText className="self-start">{permissionErrors.date}</ErrorText>
+                                    }
                                 </section>
+                                {/* tipe izin */}
                                 <section className='flex flex-col'>
                                     <Label htmlFor='date_range'>Choose Leave Type</Label>
-                                    <DropdownContainer itemStyle='full' appereance={<div className='w-full h-8 border rounded-sm py-1 px-2'>{permissionInfo.leaveType}</div>}>
+                                    <DropdownContainer itemStyle='full' appereance={<div className='w-full h-8 border capitalize rounded-sm py-1 px-2'>{permissionInfo.leaveType}</div>}>
                                         {
                                             leaveTypes.length > 0 && leaveTypes.map((item, index) => (
-                                                <DropdownItem key={index} onClickCallback={() => setPermissionInfo(prev => ({ ...prev, leaveType: item.name }))}>{item.name}</DropdownItem>
+                                                <DropdownItem className='capitalize' key={index} onClickCallback={() => setPermissionInfo(prev => ({ ...prev, leaveType: item.name }))}>{item.name}</DropdownItem>
                                             ))
                                         }
                                     </DropdownContainer>
+                                    {
+                                        permissionErrors.leaveType && <ErrorText className="self-start">{permissionErrors.leaveType}</ErrorText>
+                                    }
                                 </section>
+                                {/* alasan izin */}
                                 <section className='flex flex-col'>
                                     <Label htmlFor='date_range'>Leave Reason</Label>
-                                    <TextareaAutosize className='resize-none border px-3 py-2 rounded-md' />
+                                    <TextareaAutosize required className='resize-none border px-3 py-2 rounded-md' onChange={(e) => setPermissionInfo(prev => ({ ...prev, leaveReason: e.target.value }))} />
+                                    {
+                                        permissionErrors.reason && <ErrorText className="self-start">{permissionErrors.reason}</ErrorText>
+                                    }
                                 </section>
-                            </form>
+                                <Button className='w-full' onClick={() => handleLeaveApplicant()}>Submit</Button>
+                            </article>
                         </>
                 }
             </>
@@ -394,7 +439,7 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
 
     // effects
     useEffect(() => {
-        getAllAttendanceBy(chartDataBy)
+        // getAllAttendanceBy(chartDataBy)
         getAllLeaveTypes()
     }, [])
     useEffect(() => {
@@ -505,6 +550,31 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
                         <Button className='w-full' onClick={() => modalHandler('create')}>Create New </Button>
                     </div>
             }
+        </section>
+        <section>
+            <Title title='Leave Applicant' desc='Your employee leave request you can accept or decline ( with description is an option )' />
+            <table className='w-full mt-10 max-h-[300px] table-fixed'>
+                <thead>
+                    <tr className='h-fit bg-darkerMain text-white'>
+                        <th>Name</th>
+                        <th>Clockin</th>
+                        <th>Clockout</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody className='h-fit'>
+                    {
+                        employeeAttendanceHistory && employeeAttendanceHistory.map((employee, index) => (
+                            <tr className='text-center transition-300 hover:bg-zinc-100 cursor-pointer' key={index}>
+                                <td>{employee.name}</td>
+                                <td>{employee.clockin}</td>
+                                <td>{employee.clockOut}</td>
+                                <td>{employee.stauts}</td>
+                            </tr>
+                        ))
+                    }
+                </tbody>
+            </table>
         </section>
         <Modal>
             <div className='space-y-3'>
