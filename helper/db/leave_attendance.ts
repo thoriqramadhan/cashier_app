@@ -16,3 +16,14 @@ export async function addLeaveAttendanceRequest(clientData: LeaveAttendanceReque
         return {status: 400 , message: error}
     }
 }
+
+export async function getAllAttendaceRequests(statusOption: boolean) {
+    try {
+        const response = await query('SELECT * FROM attendance_leave_applicant WHERE status = false');
+        return response.rows;
+    } catch (error) {
+        console.log(error);
+        
+        return []
+    }
+}

@@ -307,54 +307,37 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         leave: false
     })
     const { modalState, modalSetter } = useModal()
-    const [modalType, setModalType] = useState<'create' | 'edit'>('create')
+    const [modalType, setModalType] = useState<'create' | 'edit' | 'applicant'>('create')
     const chartDataType = ['Year', 'Month', 'Date'] as const
     const [chartDataBy, setChartDataBy] = useState(chartDataType[0])
     // history
     const [employeeAttendanceHistory, setEmployeeAttendanceHistory] = useState<EmployeeAttendanceHistory[]>([])
-    // WIP -------------------------------
-    async function getAllAttendanceBy(option: (typeof chartDataType)[number]) {
-        try {
-            const response = await fetch('/api/attendance?option=all&allOption=date')
-            if (!response.ok) throw new Error('Failed to fetch attendance data');
-            const responseData = await response.json() as AttendanceInfo[]
-            const groupedData = Object.values(
-                responseData.reduce((acc, curr) => {
-                    const dateKey = curr.date.split("T")[0]; // Ambil tanggal saja
-                    const key = `${curr.userId}-${dateKey}`;
-                    if (!acc[key]) {
-                        acc[key] = { userid: curr.userId, date: dateKey, clockin: null, clockout: null };
-                    }
-                    if (curr.status === "clockin" && !acc[key].clockin) {
-                        acc[key].clockin = curr.date;
-                    }
-                    if (curr.status === "clockout" && !acc[key].clockout) {
-                        acc[key].clockout = curr.date;
-                    }
-
-                    return acc;
-                }, {} as Record<string, { userid: string; date: string; clockin: string | null; clockout: string | null }>)
-            );
-
-            // const newEmployeeHistory = responseData.map(attendance => {
-            //     const username = allUsers?.find(user => user.id === attendance.userId)?.username
-            //     return { id: attendance.userId, name: username, clockin: attendance. }
-            // })
-            console.log(groupedData);
-            console.log(responseData);
-
-        } catch (error) {
-
-        }
-    }
     // leave type
     const [leaveState, setLeaveState] = useState({
         state: '',
         error: ''
     })
     const [oldEditState, setOldEditState] = useState('')
-
     const [leaveArrays, setLeaveArrays] = useState<{ name: string }[]>([])
+    // leave applicants
+    const [leaveApplicants, setLeaveApplicants] = useState([])
+    const leaveApplicantModalInit = {
+        name: '',
+        category: '',
+        reason: '',
+        leave_at: '',
+        back_at: '',
+        status: false,
+        admin_msg: ''
+    }
+    const [leaveApplicantModal, setLeaveApplicantModal] = useState(leaveApplicantModalInit)
+
+    // general functions
+    function modalHandler(value: 'create' | 'edit' | 'applicant') {
+        setModalType(value)
+        modalSetter('state', !modalState.isOpen)
+    }
+    // leave type functions
     async function addLeaveType() {
         try {
             if (leaveState.state.length <= 0) throw new Error('Empty value')
@@ -431,23 +414,86 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         }
 
     }
+    // applicant function
+    async function responseLeaveRequest(option: 'init' | 'update', value?: {
+        name: string;
+        category: string;
+        reason: string;
+        leave_at: string;
+        back_at: string;
+        status: boolean;
+        admin_msg: string;
+    }) {
+        try {
+            if (option === 'init') {
+                setLeaveApplicantModal(value)
+            }
+            if (option == 'update') {
+                console.log(leaveApplicantModal);
+            }
+        } catch (error) {
 
-    function modalHandler(value: 'create' | 'edit') {
-        setModalType(value)
-        modalSetter('state', !modalState.isOpen)
+        }
+    }
+    // init function
+    // WIP -------------------------------
+    async function getAllAttendanceBy(option: '') {
+        try {
+            const response = await fetch('/api/attendance?option=all&allOption=date')
+            if (!response.ok) throw new Error('Failed to fetch attendance data');
+            const responseData = await response.json() as AttendanceInfo[]
+            const groupedData = Object.values(
+                responseData.reduce((acc, curr) => {
+                    const dateKey = curr.date.split("T")[0]; // Ambil tanggal saja
+                    const key = `${curr.userId}-${dateKey}`;
+                    if (!acc[key]) {
+                        acc[key] = { userid: curr.userId, date: dateKey, clockin: null, clockout: null };
+                    }
+                    if (curr.status === "clockin" && !acc[key].clockin) {
+                        acc[key].clockin = curr.date;
+                    }
+                    if (curr.status === "clockout" && !acc[key].clockout) {
+                        acc[key].clockout = curr.date;
+                    }
+
+                    return acc;
+                }, {} as Record<string, { userid: string; date: string; clockin: string | null; clockout: string | null }>)
+            );
+
+            // const newEmployeeHistory = responseData.map(attendance => {
+            //     const username = allUsers?.find(user => user.id === attendance.userId)?.username
+            //     return { id: attendance.userId, name: username, clockin: attendance. }
+            // })
+            console.log(groupedData);
+            console.log(responseData);
+
+        } catch (error) {
+
+        }
+    }
+    async function getAllLeaveAttendanceRequest() {
+        try {
+            const response = await fetch('/api/attendance/leave')
+            if (!response.ok) throw new Error(response.statusText)
+            const responseData = await response.json()
+            setLeaveApplicants(responseData)
+            console.log(responseData);
+
+        } catch (error) {
+            console.log(error);
+
+        }
     }
 
     // effects
     useEffect(() => {
         // getAllAttendanceBy(chartDataBy)
+        getAllLeaveAttendanceRequest()
         getAllLeaveTypes()
     }, [])
-    useEffect(() => {
-        console.log(leaveArrays);
-
-    }, [leaveArrays])
 
     return <div className='px-10 w-full space-y-20 pb-20'>
+        {/* employee attendace history */}
         <section className='w-full space-y-5'>
             <div className="">
                 <Title title='Employee' />
@@ -518,6 +564,7 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
                 </tbody>
             </table>
         </section>
+        {/* leave type */}
         <section className="w-full space-y-5 ">
             {
                 loading.leave ? <TableSkeleton /> :
@@ -551,25 +598,33 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
                     </div>
             }
         </section>
+        {/* leave applicant */}
         <section>
             <Title title='Leave Applicant' desc='Your employee leave request you can accept or decline ( with description is an option )' />
             <table className='w-full mt-10 max-h-[300px] table-fixed'>
                 <thead>
                     <tr className='h-fit bg-darkerMain text-white'>
-                        <th>Name</th>
-                        <th>Clockin</th>
-                        <th>Clockout</th>
+                        <th>Category</th>
+                        <th>Reason</th>
+                        <th>LeaveAt</th>
+                        <th>BackAt</th>
                         <th>Status</th>
+                        <th>Admin Message</th>
                     </tr>
                 </thead>
                 <tbody className='h-fit'>
                     {
-                        employeeAttendanceHistory && employeeAttendanceHistory.map((employee, index) => (
-                            <tr className='text-center transition-300 hover:bg-zinc-100 cursor-pointer' key={index}>
-                                <td>{employee.name}</td>
-                                <td>{employee.clockin}</td>
-                                <td>{employee.clockOut}</td>
-                                <td>{employee.stauts}</td>
+                        leaveApplicants && leaveApplicants.map((item, index) => (
+                            <tr className='text-center transition-300 hover:bg-zinc-100 cursor-pointer' key={index} onClick={() => {
+                                modalHandler('applicant')
+                                responseLeaveRequest('init', { name: 'test', category: item.leave_category, reason: item.reason, leave_at: item.leave_at, back_at: item.back_at, status: item.status, admin_msg: item.message_callback ? item.message_callback : '---' })
+                            }}>
+                                <td>{item.leave_category}</td>
+                                <td>{item.reason}</td>
+                                <td>{item.leave_at}</td>
+                                <td>{item.back_at}</td>
+                                <td>{item.status ? 'Approved' : '---'}</td>
+                                <td>{item.message_callback ? item.message_callback : '---'}</td>
                             </tr>
                         ))
                     }
@@ -578,23 +633,51 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         </section>
         <Modal>
             <div className='space-y-3'>
-                <Label htmlFor='leave_name' >
-                    {modalType === 'edit' && 'Edit'} Leave Type
-                </Label>
-                <Input type='text' name='leave_name' placeholder='Leave name..' autoComplete='off' value={leaveState.state} onChange={(e) => setLeaveState(prev => ({ ...prev, state: e.target.value }))} />
+                {
+                    modalType === 'applicant' && <>
+                        <Label htmlFor='name' >Name</Label>
+                        <Input type='text' name='name' disabled value={leaveApplicantModal.name} />
+                        <Label htmlFor='category' >Category</Label>
+                        <Input type='text' name='reason' disabled value={leaveApplicantModal.category} />
+                        <Label htmlFor='reason' >Reason</Label>
+                        <TextareaAutosize value={leaveApplicantModal.reason} disabled className='resize-none block w-full p-1 cursor-not-allowed' />
+                        <Label htmlFor='leave_at' >Leave At</Label>
+                        <Input type='text' name='leave_at' disabled value={leaveApplicantModal.leave_at} />
+                        <Label htmlFor='back_at' >Back At</Label>
+                        <Input type='text' name='back_at' disabled value={leaveApplicantModal.back_at} />
+                        <Label htmlFor='status' >Status</Label>
+                        <DropdownContainer itemStyle='full' appereance={<div className="w-full h-full flex items-center px-5 cursor-pointer border py-1 ">{leaveApplicantModal.status ? 'Approved' : '---'}</div>}>
+                            <DropdownItem onClickCallback={() => setLeaveApplicantModal(prev => ({ ...prev, status: true }))}>Approved</DropdownItem>
+                            <DropdownItem onClickCallback={() => setLeaveApplicantModal(prev => ({ ...prev, status: false }))}>Rejected</DropdownItem>
+                        </DropdownContainer>
+                        <Label htmlFor='admin_msg' >Message From Admin</Label>
+                        <Input type='text' name='admin_msg' value={leaveApplicantModal.admin_msg} onChange={(e) => setLeaveApplicantModal(prev => ({ ...prev, admin_msg: e.target.value }))} />
+                        <ErrorText className='text-slate-500'>optional</ErrorText>
+                    </>
+                }
+                {
+                    modalType !== 'applicant' && <>
+                        <Label htmlFor='leave_name' >
+                            {modalType === 'edit' && 'Edit'} Leave Type
+                        </Label>
+                        <Input type='text' name='leave_name' placeholder='Leave name..' autoComplete='off' value={leaveState.state} onChange={(e) => setLeaveState(prev => ({ ...prev, state: e.target.value }))} />
+                    </>
+                }
                 {
                     leaveState.error && <ErrorText className="self-start">{leaveState.error}</ErrorText>
                 }
                 <Button className='w-full' onClick={() => {
                     if (modalType === 'create') {
                         addLeaveType()
-                    } else {
+                    } else if (modalType === 'edit') {
                         editLeaveType()
+                    } else {
+                        responseLeaveRequest('update')
                     }
-                }}>{modalType === 'create' ? 'Create' : 'Edit'}</Button>
+                }}>{modalType === 'create' ? 'Create' : modalType === 'edit' ? 'Edit' : 'Response'}</Button>
             </div>
-        </Modal>
-    </div>;
+        </Modal >
+    </div >;
 }
 
 

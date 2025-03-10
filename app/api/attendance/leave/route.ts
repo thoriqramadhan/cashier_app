@@ -1,4 +1,4 @@
-import { addLeaveAttendanceRequest } from "@/helper/db/leave_attendance";
+import { addLeaveAttendanceRequest, getAllAttendaceRequests } from "@/helper/db/leave_attendance";
 import { NextRequest } from "next/server";
 
 export async function POST(req:NextRequest) {
@@ -13,5 +13,14 @@ export async function POST(req:NextRequest) {
         return Response.json(clientData , {status:200})
     } catch (error) {
         return Response.json(error.message , {status:400})
+    }
+}
+
+export async function GET() {
+    try {
+        const getResponses = await getAllAttendaceRequests(true)
+        return Response.json(getResponses , {status:200})
+    } catch (error) {
+        return Response.json("Test" , {status:400})
     }
 }
