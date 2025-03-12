@@ -1,6 +1,7 @@
 'use client'
 import { getAuthInfo } from '@/lib/auth/jwt';
 import _profileSettings from './_settingsComponents/_profileSettings';
+import _taxSettings from './_settingsComponents/_taxSettings';
 import { FC, useEffect, useState } from 'react';
 import { Loading } from '@/components/ui/loading';
 import Tab, { TabItem } from '@/components/client/tab';
@@ -33,6 +34,8 @@ const Page: FC<PageProps> = ({ }) => {
         },
         {
             name: 'general'
+        }, {
+            name: 'tax'
         }
     ]
     const fetchAuthInfo = async () => {
@@ -48,7 +51,11 @@ const Page: FC<PageProps> = ({ }) => {
         }
     }
     function showPageHandler() {
-        if (selectedTab == 'profile') return <_profileSettings authInfo={authInfo} />
+        if (selectedTab == 'profile') {
+            return <_profileSettings authInfo={authInfo} />
+        } else if (selectedTab == 'tax') {
+            return <_taxSettings authInfo={authInfo} />
+        }
     }
     function handleChangeRoute(name: string) {
         console.log('clicked');
