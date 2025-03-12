@@ -14,7 +14,7 @@ interface _taxSettingsProps {
 }
 
 const _taxSettings: FC<_taxSettingsProps> = ({ authInfo }) => {
-    const [tax, setTax] = useState(10)
+    const [tax, setTax] = useState(0)
     const [message, setMessage] = useState('')
     const [loading, setLoading] = useState(true)
     const handleTaxClient = (value: number) => {
@@ -49,7 +49,7 @@ const _taxSettings: FC<_taxSettingsProps> = ({ authInfo }) => {
                 const response = await fetch('/api/tax')
                 if (!response.ok) throw new Error(response.statusText)
                 const responseData = await response.json()
-                setTax(responseData[0].value)
+                setTax(responseData.data[0].value)
 
             } catch (error) {
                 console.log(error);
