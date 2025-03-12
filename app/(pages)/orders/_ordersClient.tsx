@@ -9,6 +9,7 @@ import { DropdownItem, DropdownSettings } from '@/components/client/dropdown';
 import { Check, Pencil, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Loading } from '@/components/ui/loading';
 
 interface _ordersClientProps {
 }
@@ -23,6 +24,8 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
     }
     const [transactionDatas, setTransactionDatas] = useState(JSON.parse(localStorage.getItem('transaction')) ?? [])
     const [transactionDetailData, setTransactionDetailData] = useState(transactionDetailDataInit)
+    const [taxState, setTaxState] = useState(0)
+    const [loading, setLoading] = useState(true)
 
     const date = new Date();
     function openTransactionDetail(id: string) {
@@ -75,7 +78,7 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
             filteredProductStorage.push(...transactionDetailData.products_detail)
             // calculate total price & tax
             const totalPrice = (transactionDetailData.products_detail.reduce((prev, current) => (Number(current.price) * Number(current.quantity) + prev), 0));
-            const totalPriceWithTax = (totalPrice / 10) + totalPrice
+            const totalPriceWithTax = totalPrice * (taxState / 100) + totalPrice
             // update transaction data reference
             const newTransctionStorage = transactionDatas.map(transaction => {
                 if (transaction.id === transactionDetailData.transaction_id) {
@@ -131,6 +134,24 @@ const _ordersClient: FC<_ordersClientProps> = ({ }) => {
     useEffect(() => {
         if (modalState.isOpen == false) { setModalType('normal') }
     }, [modalState.isOpen])
+    useEffect(() => {
+        const fetchTax = async () => {
+            try {
+                const response = await fetch('/api/tax')
+                if (!response.ok) throw new Error(response.statusText)
+                const responseData = await response.json()
+                setTaxState(responseData.data[0].value)
+
+            } catch (error) {
+                console.log(error);
+
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchTax()
+    }, [])
+    if (loading) return <Loading size={50} />
     return <>
         <table className='w-full mt-10 max-h-[300px] table-fixed'>
             <thead>

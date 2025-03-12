@@ -38,3 +38,38 @@ export async function getAllAttendanceBy(option: 'date' | 'month' | 'year' , val
         console.log(error)
     }
 }
+
+export async function addLeaveType(value: string) {
+    try {
+        await query('INSERT INTO attendance_type(name) VALUES($1)', [value.toLowerCase()])
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export async function getAllLeaveTypes() : Promise<{name: string}[]> {
+    try {
+        const response = await query('SELECT * FROM attendance_type')
+        return response.rows
+    } catch (error) {
+        console.log(error)
+        return []
+    }
+}
+
+export async function deleteLeaveType(name: string) {
+    try {
+        await query('DELETE FROM attendance_type WHERE name = $1', [name])
+        return {status: 200}
+    } catch (error) {
+        return {status: 400 , statusText: error}
+        
+    }
+}
+export async function updateLeaveType(oldVal: string, newVal: string) {
+    try {
+        await query('UPDATE attendance_type SET name = $1 WHERE name = $2' , [newVal.toLowerCase() , oldVal])
+    } catch (error) {
+        console.log(error);
+    }
+}

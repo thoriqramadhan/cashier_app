@@ -5,6 +5,7 @@ import { useSidebar } from '@/components/context/sidebarContext';
 import { ErrorText } from '@/components/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Loading } from '@/components/ui/loading';
 import { CategoryResponse } from '@/helper/db/category';
 import { getLastTransactionId } from '@/helper/db/history';
 import { formatToIDR } from '@/lib/utils';
@@ -24,6 +25,7 @@ const SelectedProductContext = createContext<{ state: CartProduct[], setter: Dis
 })
 
 const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
+    const [loading, setLoading] = useState(true)
     const [searchValue, setSearchValue] = useState('')
     const [searchErrorMsg, setSearchErrorMsg] = useState('')
     const [selectedTab, setSelectedTab] = useState('all')
@@ -33,8 +35,9 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     const [isCartOpen, setIsCartOpen] = useState(false)
 
     // price
-    const [prices, setPrices] = useState({ subtotal: 0, tax: 0, total: 0 })
 
+    const [prices, setPrices] = useState({ subtotal: 0, tax: 0, total: 0 })
+    const [taxState, setTaxState] = useState(0)
     function handleChangeTab(name: string) {
         setSelectedTab(name)
     }
@@ -65,7 +68,7 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
     useEffect(() => {
         if (selectedProducts.length > 0) {
             const subtotal = selectedProducts.reduce((acc, item) => (acc + item.totalPrice), 0);
-            const tax = subtotal / 10;
+            const tax = subtotal * (taxState / 100);
             const total = subtotal + tax;
             setPrices({
                 subtotal,
@@ -94,6 +97,30 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
         }
 
     }, [searchValue])
+    useEffect(() => {
+        const fetchTax = async () => {
+            try {
+                const response = await fetch('/api/tax')
+                if (!response.ok) throw new Error(response.statusText)
+                const responseData = await response.json()
+                console.log(responseData);
+
+                setTaxState(responseData.data[0].value)
+
+            } catch (error) {
+                console.log(error);
+
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchTax()
+    }, [])
+    useEffect(() => {
+        console.log(taxState);
+
+    }, [taxState])
+    if (loading) return <Loading size={50} />
     return <div className='px-5 w-full my-5 relative'>
         <InputSearch className='py-2' placeHolder='Search products...' onChange={(e) => searchProducts(e.target.value)} />
         {searchErrorMsg.length > 0 && <ErrorText className='ml-3 mt-[3px]'>{searchErrorMsg}</ErrorText>}
@@ -131,7 +158,7 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
             </span>
         </div>
         <SelectedProductContext.Provider value={{ state: selectedProducts, setter: setSelectedProducts }}>
-            <ProductCartList isCartOpen={isCartOpen} selectedProduct={{ state: selectedProducts, setter: setSelectedProducts }} prices={prices} />
+            <ProductCartList taxPercentage={taxState} isCartOpen={isCartOpen} selectedProduct={{ state: selectedProducts, setter: setSelectedProducts }} prices={prices} />
         </SelectedProductContext.Provider >
     </div >;
 }
@@ -140,10 +167,13 @@ const _homeClient: FC<_homeClientProps> = ({ categoryDatas, productDatas }) => {
 interface ProductCartListProps {
     isCartOpen: boolean,
     selectedProduct: { state: CartProduct[], setter: Dispatch<SetStateAction<CartProduct[]>> },
-    prices: { subtotal: number, tax: number, total: number }
+    prices: { subtotal: number, tax: number, total: number },
+    taxPercentage: number
 }
 
-const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct, prices }) => {
+const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct, prices, taxPercentage }) => {
+    console.log(taxPercentage);
+
     const [customerName, setCustomerName] = useState('')
     const [loading, setLoading] = useState(false)
     const router = useRouter()
@@ -242,7 +272,7 @@ const ProductCartList: FC<ProductCartListProps> = ({ isCartOpen, selectedProduct
                 <p className='font-bold'>{formatToIDR(prices.subtotal)}</p>
             </div>
             <div className="w-full flex justify-between items-end *:text-sm">
-                <p>Pajak 10%</p>
+                <p>Pajak {taxPercentage}%</p>
                 <p className='font-bold'>{formatToIDR(prices.tax)}</p>
             </div>
             <div className="w-full flex justify-between items-end *:text-sm">

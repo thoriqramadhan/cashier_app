@@ -83,10 +83,6 @@ const Page: FC<PageProps> = ({ }) => {
             }
         ))
     }
-    useEffect(() => {
-        console.log(message);
-
-    }, [message])
     async function handleCreateEmployee(event: FormEvent) {
         event.preventDefault()
         const form = event.target
