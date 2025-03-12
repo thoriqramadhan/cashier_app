@@ -12,7 +12,7 @@ import { AttendanceInfo } from '@/helper/db/attendance';
 import Flatpickr from 'react-flatpickr'
 import "flatpickr/dist/flatpickr.min.css";
 import TextareaAutosize from 'react-textarea-autosize'
-import { Ban, ClockArrowDown, ClockArrowUp, FileCheck, History, MousePointerClick } from 'lucide-react';
+import { Ban, Check, ClockArrowDown, ClockArrowUp, FileCheck, History, MousePointerClick } from 'lucide-react';
 import React, { FC, useEffect, useState } from 'react';
 import { UserSafe } from '@/types/login';
 import { Input } from '@/components/ui/input';
@@ -39,7 +39,7 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
     // general state
     const { modalState, modalSetter } = useModal()
     const [loading, setLoading] = useState(true)
-    const [attendnaceType, setAttendnaceType] = useState<'Attendance' | 'Permission'>('Permission')
+    const [attendnaceType, setAttendnaceType] = useState<'Attendance' | 'Permission'>('Attendance')
     const iconSize = 40;
     // attendance state
     const [employeeStatus, setEmployeeStatus] = useState<'clockin' | 'clockout' | 'finished'>('clockin')
@@ -76,6 +76,8 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
     const permissionInfoInit = {
         leaveType: '',
         leaveReason: '',
+        isLimit: false,
+        limitInfo: {}
     }
     const [permissionInfo, setPermissionInfo] = useState(permissionInfoInit)
     async function handleAttendance(option: 'clockin' | 'clockout') {
@@ -122,10 +124,11 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                 responseData = { message: response.statusText };
             }
             if (!response.ok) throw new Error(responseData)
-            setPermissionInfo({
+            setPermissionInfo(prev => ({
+                ...prev,
                 leaveReason: '',
                 leaveType: leaveTypes[0].name
-            })
+            }))
             setDateToLeave(null)
         } catch (error) {
             console.log(error.message);
@@ -195,9 +198,29 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                 console.log(error);
             }
         }
+        const getAttendanceLimitStatus = async () => {
+            try {
+                const dateNow = new Date()
+                const formattedDate = new Intl.DateTimeFormat('sv-SE').format(dateNow)
+                const response = await fetch(`/api/attendance/leave?option=check_limit&userId=${userId}&date=${formattedDate}`)
+                if (!response.ok) throw new Error(response.statusText)
+                const responseData = await response.json()
+                console.log(responseData);
+
+                setPermissionInfo(prev => ({ ...prev, isLimit: responseData.status, limitInfo: responseData.data ? responseData.data : {} }))
+            } catch (error) {
+                console.log(error);
+
+            }
+        }
         todayAttendanceInfo()
         getLeaveTypes()
+        getAttendanceLimitStatus()
     }, [])
+    useEffect(() => {
+        console.log(permissionInfo);
+
+    }, [permissionInfo])
     return <>
         {
             loading ? <Loading size={50} className='fixed top-1/2 left-1/2 m-0' /> : <>
@@ -210,15 +233,19 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                 {
                     attendnaceType == 'Attendance' ?
                         <>
-                            <div className={`w-[200px] h-[200px]  border-[4px] rounded-2xl flex flex-col items-center justify-center bg-gradient-to-b ${employeeStatus === 'clockin' || employeeStatus === 'finished' ? 'from-[rgba(220,252,231,0.3)] to-[rgba(134,239,172,1)]' : 'from-white to-black'} shadow-md cursor-pointer`} onClick={() => modalSetter('state', !modalState.isOpen)}>
-                                {isFinished ? <FileCheck size={80} color='white' /> :
+                            <div className={`w-[200px] h-[200px]  border-[4px] rounded-2xl flex flex-col items-center justify-center bg-gradient-to-b ${employeeStatus === 'clockin' || employeeStatus === 'finished' ? 'from-[rgba(220,252,231,0.3)] to-[rgba(134,239,172,1)]' : 'from-white to-black'} shadow-md cursor-pointer`} onClick={() => {
+                                if (!permissionInfo.limitInfo.status) {
+                                    modalSetter('state', !modalState.isOpen)
+                                }
+                            }}>
+                                {permissionInfo.limitInfo.status ? <Check color='white' size={80} /> : isFinished ? <FileCheck size={80} color='white' /> :
                                     <MousePointerClick size={80} color='white' />
                                 }
-                                <p className='text-white font-semibold text-lg mt-2'>{employeeStatus === 'clockin' ? 'Clock In' : isFinished ? 'Finished' : 'Clock Out'}</p>
+                                <p className='text-white font-semibold text-lg mt-2'>{permissionInfo.limitInfo.status ? 'Approved' : employeeStatus === 'clockin' ? 'Clock In' : isFinished ? 'Finished' : 'Clock Out'}</p>
                             </div>
                             <div className="flex gap-x-12">
                                 {
-                                    attendanceStatus?.length > 0 && attendanceStatus.map((item, index) => {
+                                    permissionInfo.limitInfo.status ? 'Admin approved your leave request' : attendanceStatus?.length > 0 && attendanceStatus.map((item, index) => {
                                         console.log(item);
 
                                         return (
@@ -238,40 +265,50 @@ const EmployeeAttendance: FC<EmployeeAttendanceProps> = ({ userId }) => {
                         // UI leave applicant
                         <>
                             <article className='p-5 border rounded-md bg-white min-w-[300px] h-fit shadow-sm space-y-5 *:space-y-3'>
-                                <Title title='Apply For Leave' desc='Setiap user hanya dapat mengirimkan izin 1x/hari' />
-                                {/* pilih tanggal */}
-                                <section className='flex flex-col'>
-                                    <Label htmlFor='date_range'>Choose Date</Label>
-                                    <Flatpickr options={{ mode: 'range' }} className='border rounded-md px-2 py-1' onValueUpdate={(dates) => {
-                                        if (dates.length === 2) setDateToLeave(dates);
-                                    }} />
-                                    {
-                                        permissionErrors.date && <ErrorText className="self-start">{permissionErrors.date}</ErrorText>
-                                    }
-                                </section>
-                                {/* tipe izin */}
-                                <section className='flex flex-col'>
-                                    <Label htmlFor='date_range'>Choose Leave Type</Label>
-                                    <DropdownContainer itemStyle='full' appereance={<div className='w-full h-8 border capitalize rounded-sm py-1 px-2'>{permissionInfo.leaveType}</div>}>
-                                        {
-                                            leaveTypes.length > 0 && leaveTypes.map((item, index) => (
-                                                <DropdownItem className='capitalize' key={index} onClickCallback={() => setPermissionInfo(prev => ({ ...prev, leaveType: item.name }))}>{item.name}</DropdownItem>
-                                            ))
-                                        }
-                                    </DropdownContainer>
-                                    {
-                                        permissionErrors.leaveType && <ErrorText className="self-start">{permissionErrors.leaveType}</ErrorText>
-                                    }
-                                </section>
-                                {/* alasan izin */}
-                                <section className='flex flex-col'>
-                                    <Label htmlFor='date_range'>Leave Reason</Label>
-                                    <TextareaAutosize required className='resize-none border px-3 py-2 rounded-md' onChange={(e) => setPermissionInfo(prev => ({ ...prev, leaveReason: e.target.value }))} />
-                                    {
-                                        permissionErrors.reason && <ErrorText className="self-start">{permissionErrors.reason}</ErrorText>
-                                    }
-                                </section>
-                                <Button className='w-full' onClick={() => handleLeaveApplicant()}>Submit</Button>
+                                {
+                                    permissionInfo.isLimit ? <div className='flex flex-col items-center justify-center gap-y-2 '>
+                                        <Check size={50} />
+                                        <span className='text-center'>
+                                            <p>You have reached the limit today!</p>
+                                            <p className='text-xs font-light mt-1 text-zinc-400'>Wait for admin to approved your request, <br /> check in attendance if approved it will change to check</p>
+                                        </span>
+                                    </div> : <>
+                                        <Title title='Apply For Leave' desc='Setiap user hanya dapat mengirimkan izin 1x/hari' />
+                                        {/* pilih tanggal */}
+                                        <section className='flex flex-col'>
+                                            <Label htmlFor='date_range'>Choose Date</Label>
+                                            <Flatpickr options={{ mode: 'range' }} className='border rounded-md px-2 py-1' onValueUpdate={(dates) => {
+                                                if (dates.length === 2) setDateToLeave(dates);
+                                            }} />
+                                            {
+                                                permissionErrors.date && <ErrorText className="self-start">{permissionErrors.date}</ErrorText>
+                                            }
+                                        </section>
+                                        {/* tipe izin */}
+                                        <section className='flex flex-col'>
+                                            <Label htmlFor='date_range'>Choose Leave Type</Label>
+                                            <DropdownContainer itemStyle='full' appereance={<div className='w-full h-8 border capitalize rounded-sm py-1 px-2'>{permissionInfo.leaveType}</div>}>
+                                                {
+                                                    leaveTypes.length > 0 && leaveTypes.map((item, index) => (
+                                                        <DropdownItem className='capitalize' key={index} onClickCallback={() => setPermissionInfo(prev => ({ ...prev, leaveType: item.name }))}>{item.name}</DropdownItem>
+                                                    ))
+                                                }
+                                            </DropdownContainer>
+                                            {
+                                                permissionErrors.leaveType && <ErrorText className="self-start">{permissionErrors.leaveType}</ErrorText>
+                                            }
+                                        </section>
+                                        {/* alasan izin */}
+                                        <section className='flex flex-col'>
+                                            <Label htmlFor='date_range'>Leave Reason</Label>
+                                            <TextareaAutosize required className='resize-none border px-3 py-2 rounded-md' onChange={(e) => setPermissionInfo(prev => ({ ...prev, leaveReason: e.target.value }))} />
+                                            {
+                                                permissionErrors.reason && <ErrorText className="self-start">{permissionErrors.reason}</ErrorText>
+                                            }
+                                        </section>
+                                        <Button className='w-full' onClick={() => handleLeaveApplicant()}>Submit</Button>
+                                    </>
+                                }
                             </article>
                         </>
                 }
@@ -486,7 +523,7 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
     }
     async function getAllLeaveAttendanceRequest() {
         try {
-            const response = await fetch('/api/attendance/leave')
+            const response = await fetch('/api/attendance/leave?option=getAll')
             if (!response.ok) throw new Error(response.statusText)
             const responseData = await response.json()
             setLeaveApplicants(responseData)
@@ -636,7 +673,7 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
                                 <td>{item.reason}</td>
                                 <td>{item.leave_at}</td>
                                 <td>{item.back_at}</td>
-                                <td>{item.status ? 'Approved' : '---'}</td>
+                                <td>{item.status == null ? "---" : item.status ? "Approved" : "Rejected"}</td>
                                 <td>{item.message_callback ? item.message_callback : '---'}</td>
                             </tr>
                         ))
@@ -692,11 +729,5 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
         </Modal >
     </div >;
 }
-
-
-
-
-
-
 
 export default _attendanceClient;
