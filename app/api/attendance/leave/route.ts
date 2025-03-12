@@ -1,5 +1,5 @@
-import { addLeaveAttendanceRequest, getAllAttendaceRequests } from "@/helper/db/leave_attendance";
-import { NextRequest } from "next/server";
+import { addLeaveAttendanceRequest, getAllAttendaceRequests, updateLeaveAttendance } from "@/helper/db/leave_attendance";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req:NextRequest) {
     try {
@@ -18,9 +18,23 @@ export async function POST(req:NextRequest) {
 
 export async function GET() {
     try {
-        const getResponses = await getAllAttendaceRequests(true)
+        const getResponses = await getAllAttendaceRequests()
         return Response.json(getResponses , {status:200})
     } catch (error) {
         return Response.json("Test" , {status:400})
+    }
+}
+
+export async function PATCH(req: NextRequest) {
+    try {
+        const body = await req.json()
+        const { id, status, adminMsg } = body
+        const pathcResponse = await updateLeaveAttendance(status , id , adminMsg)
+        return NextResponse.json({status , adminMsg} , {status: 200})
+    } catch (error) {
+        console.log(error);
+        
+        return NextResponse.json('Failed to update' , {status: 400})
+        
     }
 }

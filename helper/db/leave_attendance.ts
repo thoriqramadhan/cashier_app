@@ -17,13 +17,30 @@ export async function addLeaveAttendanceRequest(clientData: LeaveAttendanceReque
     }
 }
 
-export async function getAllAttendaceRequests(statusOption: boolean) {
+export async function getAllAttendaceRequests(statusOption?: boolean) {
+    let statusBuilder = ''
+    if (!!statusOption) {
+        statusBuilder = `WHERE status = ${statusOption}`
+    }
     try {
-        const response = await query('SELECT * FROM attendance_leave_applicant WHERE status = false');
+        const response = await query(`SELECT * FROM attendance_leave_applicant ${statusBuilder}`);
         return response.rows;
     } catch (error) {
         console.log(error);
         
         return []
     }
+}
+
+export async function updateLeaveAttendance(status: boolean, id : string, adminMsg?: string) : Promise<{status: number}>{
+    const adminMsgQuery = adminMsg && ',  message_callback = $3'
+    try {
+        await query(`UPDATE attendance_leave_applicant SET status = $1 ${adminMsgQuery} WHERE id = $2`, [String(status), id, adminMsg ? adminMsg : ''])
+        return {status: 200}
+    } catch (error) {
+        console.log(error)
+        return {status: 400}
+        
+    }
+    
 }

@@ -322,6 +322,7 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
     // leave applicants
     const [leaveApplicants, setLeaveApplicants] = useState([])
     const leaveApplicantModalInit = {
+        id: '',
         name: '',
         category: '',
         reason: '',
@@ -416,6 +417,7 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
     }
     // applicant function
     async function responseLeaveRequest(option: 'init' | 'update', value?: {
+        id: string,
         name: string;
         category: string;
         reason: string;
@@ -430,8 +432,19 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
             }
             if (option == 'update') {
                 console.log(leaveApplicantModal);
+                const response = await fetch('/api/attendance/leave', {
+                    method: 'PATCH', body: JSON.stringify({
+                        id: leaveApplicantModal.id, status: leaveApplicantModal.status, adminMsg: leaveApplicantModal.admin_msg
+                    })
+                })
+                if (!response.ok) throw new Error(response.statusText)
+                const responseData = await response.json()
+                console.log(leaveApplicants);
+                console.log(responseData);
+
             }
         } catch (error) {
+            console.log(error);
 
         }
     }
@@ -617,7 +630,7 @@ const AdminEmployeeAttendance: FC<AdminEmployeeAttendanceProps> = ({ allUsers })
                         leaveApplicants && leaveApplicants.map((item, index) => (
                             <tr className='text-center transition-300 hover:bg-zinc-100 cursor-pointer' key={index} onClick={() => {
                                 modalHandler('applicant')
-                                responseLeaveRequest('init', { name: 'test', category: item.leave_category, reason: item.reason, leave_at: item.leave_at, back_at: item.back_at, status: item.status, admin_msg: item.message_callback ? item.message_callback : '---' })
+                                responseLeaveRequest('init', { id: item.id, name: 'test', category: item.leave_category, reason: item.reason, leave_at: item.leave_at, back_at: item.back_at, status: item.status, admin_msg: item.message_callback ? item.message_callback : '---' })
                             }}>
                                 <td>{item.leave_category}</td>
                                 <td>{item.reason}</td>
