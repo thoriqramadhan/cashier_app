@@ -10,7 +10,6 @@ interface PageProps {
 const Page: FC<PageProps> = async ({ }) => {
     const categorDatas = await getAllCategory()
     const productDatas = await getAllProducts()
-    console.log(productDatas);
 
     return <>
         <_productsClient categoryDatas={categorDatas} productDatas={productDatas} />
